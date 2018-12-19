@@ -10,14 +10,24 @@ using Android.Support.V7.App;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Java.Text;
+using Java.Util;
 using TaskManager.Model;
+using TaskManager.Service;
+using static Android.App.DatePickerDialog;
+using static Android.App.TimePickerDialog;
 
 namespace TaskManager.Activities
 {
     [Activity(Label = "@string/add_task", Theme = "@style/AppTheme", MainLauncher = false)]
-    public class AddTask : AppCompatActivity
+    public class AddTask : AppCompatActivity, IOnDateSetListener, IOnTimeSetListener
     {
         private EditText dueDate;
+        private EditText dueTime;
+        private Calendar calendar;
+        private int hour = 7;
+        private int minutes = 0;
+        private TaskService TaskService;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -26,32 +36,40 @@ namespace TaskManager.Activities
             SetContentView(Resource.Layout.add_task);
             SetStatusSpinner();
             SetDueDatePicker();
+            var addTask = FindViewById<Button>(Resource.Id.add_button);
+            addTask.Click += AddTask_Click;
+        }
+
+        private void AddTask_Click(object sender, EventArgs e)
+        {
+            TaskService = new TaskService();
+            Task task = new Task();
+            task.Name = "Yayy";
+            TaskService.AddTask(task);
         }
 
         private void SetDueDatePicker()
         {
             dueDate = FindViewById<EditText>(Resource.Id.due_date);
             dueDate.Click += DueDate_Click;
-            EditText dueTime = FindViewById<EditText>(Resource.Id.due_time);
+            dueTime = FindViewById<EditText>(Resource.Id.due_time);
             dueTime.Click += DueTime_Click;
         }
 
         private void DueTime_Click(object sender, EventArgs e)
         {
-            DatePickerFragment frag = DatePickerFragment.NewInstance(delegate (DateTime time)
-            {
-                dueDate.Text = time.ToLongDateString();
-            });
-            frag.Show(FragmentManager, DatePickerFragment.TAG);
+            TimePickerDialog timePickerDialog = new TimePickerDialog(this, this, hour, minutes, true);
+            timePickerDialog.Show();
         }
 
         private void DueDate_Click(object sender, EventArgs e)
         {
-            DatePickerFragment frag = DatePickerFragment.NewInstance(delegate (DateTime time)
-            {
-                dueDate.Text = time.ToLongDateString();
-            });
-            frag.Show(FragmentManager, DatePickerFragment.TAG);
+            calendar = Calendar.Instance;
+            int year = calendar.Get(CalendarField.Year);
+            int month = calendar.Get(CalendarField.Month);
+            int day = calendar.Get(CalendarField.DayOfMonth);
+            DatePickerDialog datePickerDialog = new DatePickerDialog(this, this, year, month, day);
+            datePickerDialog.Show();
         }
 
         private void SetStatusSpinner()
@@ -67,36 +85,20 @@ namespace TaskManager.Activities
                 this.OnBackPressed();
             return base.OnOptionsItemSelected(item);
         }
-    }
 
-    public class DatePickerFragment : DialogFragment, DatePickerDialog.IOnDateSetListener
-    {
-        // TAG can be any string of your choice.
-        public static readonly string TAG = "X:" + typeof(DatePickerFragment).Name.ToUpper();
-
-        // Initialize this value to prevent NullReferenceExceptions.
-        Action<DateTime> _dateSelectedHandler = delegate { };
-
-        public static DatePickerFragment NewInstance(Action<DateTime> onDateSelected)
+        public void OnDateSet(DatePicker view, int year, int month, int dayOfMonth)
         {
-            DatePickerFragment frag = new DatePickerFragment();
-            frag._dateSelectedHandler = onDateSelected;
-            return frag;
+            dueDate.Text = $"{dayOfMonth}-{month + 1}-{year}";
+            calendar.Set(year, month, dayOfMonth);
         }
 
-        public override Dialog OnCreateDialog(Bundle savedInstanceState)
+        public void OnTimeSet(TimePicker view, int hourOfDay, int minutes)
         {
-            DateTime currently = DateTime.Now;
-            DatePickerDialog dialog = new DatePickerDialog(Activity, this, currently.Year, currently.Month - 1, currently.Day);
-            return dialog;
-        }
-
-        public void OnDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth)
-        {
-            // Note: monthOfYear is a value between 0 and 11, not 1 and 12!
-            DateTime selectedDate = new DateTime(year, monthOfYear + 1, dayOfMonth);
-            Log.Debug(TAG, selectedDate.ToLongDateString());
-            _dateSelectedHandler(selectedDate);
+            this.hour = hourOfDay;
+            this.minutes = minutes;
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss");
+            Date date = new Date(0, 0, 0, hour, minutes);
+            dueTime.Text = simpleDateFormat.Format(date);
         }
     }
 }

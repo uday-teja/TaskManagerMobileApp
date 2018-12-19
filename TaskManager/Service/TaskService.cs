@@ -1,14 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 using SQLite;
 using TaskManager.Model;
 using Environment = System.Environment;
@@ -17,65 +9,78 @@ namespace TaskManager.Service
 {
     public class TaskService
     {
-        string databaseFileName;
+        private string databaseFileName;
+        private List<Task> tasks;
+        private Task task;
 
         public TaskService()
         {
-            string applicationFolderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), "CanFindLocation");
-
-            // Create the folder path.
-            System.IO.Directory.CreateDirectory(applicationFolderPath);
-
-            databaseFileName = System.IO.Path.Combine(applicationFolderPath, "CanFindLocation.db");
+            string applicationFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "TaskManager");
+            Directory.CreateDirectory(applicationFolderPath);
+            databaseFileName = Path.Combine(applicationFolderPath, "TaskManager.db");
             var db = new SQLiteConnection(databaseFileName);
-
             db.CreateTable<Task>();
         }
 
         public void AddTask(Task task)
         {
-            using (var db = new SQLiteConnection(databaseFileName))
-            {
-                db.Insert(task);
-            }
+            PerformCRUD(task, Crud.Add);
         }
 
         public void UpdateTask(Task task)
         {
-            using (var db = new SQLiteConnection(databaseFileName))
-            {
-                db.Update(task);
-            }
+            PerformCRUD(task, Crud.Update);
         }
 
         public void DeleteTask(Task task)
         {
-            using (var db = new SQLiteConnection(databaseFileName))
-            {
-                db.Delete(task);
-            }
+            PerformCRUD(task, Crud.Delete);
         }
 
         public List<Task> GetAll()
         {
-            List<Task> tasks;
-            using (var db = new SQLiteConnection(databaseFileName))
-            {
-                tasks = new List<Task>(db.Table<Task>());
-            }
-            return tasks;
+            PerformCRUD(task, Crud.GetAll);
+            return this.tasks;
         }
 
         public Task Get(Task task)
         {
-            Task Task;
+            PerformCRUD(task, Crud.Get);
+            return this.task;
+        }
 
-            using (var db = new SQLiteConnection(databaseFileName))
+        private void PerformCRUD(Task task, Crud crud)
+        {
+            try
             {
-                Task = db.Get<Task>(task.Id);
+                using (var db = new SQLiteConnection(databaseFileName))
+                {
+                    switch (crud)
+                    {
+                        case Crud.Add:
+                            db.Insert(task);
+                            break;
+                        case Crud.Delete:
+                            db.Update(task);
+                            break;
+                        case Crud.Update:
+                            db.Delete(task);
+                            break;
+                        case Crud.Get:
+                            this.task = db.Get<Task>(task.Id);
+                            break;
+                        case Crud.GetAll:
+                            this.tasks = new List<Task>(db.Table<Task>());
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
+            catch (Exception e)
+            {
 
-            return Task;
+            }
         }
     }
 }

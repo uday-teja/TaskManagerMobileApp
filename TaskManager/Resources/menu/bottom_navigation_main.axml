@@ -13,7 +13,6 @@
       android:enabled="true"
       android:title="In Progress"
       app:showAsAction="ifRoom" />
-
   <item
       android:id="@+id/action_completed"
       android:enabled="true"

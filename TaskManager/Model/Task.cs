@@ -32,7 +32,7 @@ namespace TaskManager.Model
 
         public Nullable<DateTime> CompletedDate { get; set; }
 
-        public int Priority { get; set; }
+        public Priority Priority { get; set; }
 
         public override string ToString()
         {
@@ -47,12 +47,20 @@ namespace TaskManager.Model
         Completed
     }
 
+    public enum Priority
+    {
+        High,
+        Low,
+        Medium
+    }
+
     public enum Crud
     {
         Add,
         Update,
+        DeleteAll,
         Delete,
         Get,
-        GetAll
+        GetAll,
     }
 }

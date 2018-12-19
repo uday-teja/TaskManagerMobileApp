@@ -49,6 +49,11 @@ namespace TaskManager.Service
             return this.task;
         }
 
+        public void DeleteAll()
+        {
+            PerformCRUD(task, Crud.DeleteAll);
+        }
+
         private void PerformCRUD(Task task, Crud crud)
         {
             try
@@ -71,6 +76,9 @@ namespace TaskManager.Service
                             break;
                         case Crud.GetAll:
                             this.tasks = new List<Task>(db.Table<Task>());
+                            break;
+                        case Crud.DeleteAll:
+                            db.Table<Task>().Delete();
                             break;
                         default:
                             break;

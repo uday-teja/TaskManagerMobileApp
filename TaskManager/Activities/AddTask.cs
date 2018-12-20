@@ -36,17 +36,33 @@ namespace TaskManager.Activities
             SetContentView(Resource.Layout.add_task);
             SetStatusSpinner();
             SetDueDatePicker();
+            SetPrioritySpinner();
             var addTask = FindViewById<Button>(Resource.Id.add_button);
             addTask.Click += AddTask_Click;
+        }
+
+        private void SetPrioritySpinner()
+        {
+            var priority = FindViewById<Spinner>(Resource.Id.priority);
+            priority.Adapter = new ArrayAdapter<string>(this, Resource.Layout.support_simple_spinner_dropdown_item, Enum.GetValues(typeof(Priority)).Cast<Priority>().Select(e => e.ToString()).ToArray());
         }
 
         private void AddTask_Click(object sender, EventArgs e)
         {
             TaskService = new TaskService();
-            Task task = new Task();
-            task.Name = "Yayy";
+            Task task = new Task
+            {
+                Name = FindViewById<EditText>(Resource.Id.name).Text,
+                Description = FindViewById<EditText>(Resource.Id.description).Text,
+            };
+            var priority = FindViewById<Spinner>(Resource.Id.priority).SelectedItem;
             TaskService.AddTask(task);
         }
+
+        //private string GetText<T>(this Type type, int id)
+        //{
+        //    return FindViewById<type>(id).Text;
+        //}
 
         private void SetDueDatePicker()
         {
@@ -58,7 +74,7 @@ namespace TaskManager.Activities
 
         private void DueTime_Click(object sender, EventArgs e)
         {
-            TimePickerDialog timePickerDialog = new TimePickerDialog(this, this, hour, minutes, true);
+            var timePickerDialog = new TimePickerDialog(this, this, hour, minutes, true);
             timePickerDialog.Show();
         }
 
@@ -68,15 +84,14 @@ namespace TaskManager.Activities
             int year = calendar.Get(CalendarField.Year);
             int month = calendar.Get(CalendarField.Month);
             int day = calendar.Get(CalendarField.DayOfMonth);
-            DatePickerDialog datePickerDialog = new DatePickerDialog(this, this, year, month, day);
+            var datePickerDialog = new DatePickerDialog(this, this, year, month, day);
             datePickerDialog.Show();
         }
 
         private void SetStatusSpinner()
         {
-            Spinner spinner = FindViewById<Spinner>(Resource.Id.task_status);
-            var arrayForAdapter = Enum.GetValues(typeof(Status)).Cast<Status>().Select(e => e.ToString()).ToArray();
-            spinner.Adapter = new ArrayAdapter<string>(this, Resource.Layout.support_simple_spinner_dropdown_item, arrayForAdapter);
+            var spinner = FindViewById<Spinner>(Resource.Id.status);
+            spinner.Adapter = new ArrayAdapter<string>(this, Resource.Layout.support_simple_spinner_dropdown_item, Enum.GetValues(typeof(Status)).Cast<Status>().Select(e => e.ToString()).ToArray());
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)
@@ -96,8 +111,8 @@ namespace TaskManager.Activities
         {
             this.hour = hourOfDay;
             this.minutes = minutes;
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss");
-            Date date = new Date(0, 0, 0, hour, minutes);
+            var simpleDateFormat = new SimpleDateFormat("hh:mm");
+            var date = new Date(0, 0, 0, hour, minutes);
             dueTime.Text = simpleDateFormat.Format(date);
         }
     }

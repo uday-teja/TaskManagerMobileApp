@@ -28,6 +28,7 @@ namespace TaskManager.Activities
         private int hour = 7;
         private int minutes = 0;
         private TaskService TaskService;
+        private Task task;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -39,6 +40,15 @@ namespace TaskManager.Activities
             SetPrioritySpinner();
             var addTask = FindViewById<Button>(Resource.Id.add_button);
             addTask.Click += AddTask_Click;
+            var cancelAdd = FindViewById<Button>(Resource.Id.cancel_button);
+            cancelAdd.Click += CancelAdd_Click;
+            TaskService = new TaskService();
+            task = new Task();
+        }
+
+        private void CancelAdd_Click(object sender, EventArgs e)
+        {
+            base.OnBackPressed();
         }
 
         private void SetPrioritySpinner()
@@ -49,20 +59,12 @@ namespace TaskManager.Activities
 
         private void AddTask_Click(object sender, EventArgs e)
         {
-            TaskService = new TaskService();
-            Task task = new Task
-            {
-                Name = FindViewById<EditText>(Resource.Id.name).Text,
-                Description = FindViewById<EditText>(Resource.Id.description).Text,
-            };
+            task.Name = FindViewById<EditText>(Resource.Id.name).Text;
+            task.Description = FindViewById<EditText>(Resource.Id.description).Text;
             var priority = FindViewById<Spinner>(Resource.Id.priority).SelectedItem;
             TaskService.AddTask(task);
+            base.OnBackPressed();
         }
-
-        //private string GetText<T>(this Type type, int id)
-        //{
-        //    return FindViewById<type>(id).Text;
-        //}
 
         private void SetDueDatePicker()
         {

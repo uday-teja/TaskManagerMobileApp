@@ -52,14 +52,24 @@ namespace TaskManager.Adaptors
                 view = LayoutInflater.From(parent.Context).Inflate(Resource.Layout.task_row_view, parent, false);
                 var name = view.FindViewById<TextView>(Resource.Id.taskName);
                 var description = view.FindViewById<TextView>(Resource.Id.taskDescription);
-                var color = view.FindViewById<LinearLayout>(Resource.Id.task_row_status);
-
-                color.SetBackgroundColor(Color.ParseColor("#FF0000"));
+                var priorityColor = view.FindViewById<LinearLayout>(Resource.Id.task_row_status);
+                switch (tasks[position].Priority)
+                {
+                    case Priority.Low:
+                        priorityColor.SetBackgroundColor(Color.ParseColor("#D3D3D3"));
+                        break;
+                    case Priority.Medium:
+                        priorityColor.SetBackgroundColor(Color.ParseColor("#fbbf79"));
+                        break;
+                    case Priority.High:
+                        priorityColor.SetBackgroundColor(Color.ParseColor("#bd322c"));
+                        break;
+                }
                 view.Tag = new ViewHolder()
                 {
                     Name = name,
                     Description = description,
-                    PriorityColor = color
+                    PriorityColor = priorityColor
                 };
             };
             var holder = (ViewHolder)view.Tag;

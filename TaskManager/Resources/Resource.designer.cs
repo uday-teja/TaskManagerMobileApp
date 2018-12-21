@@ -2351,6 +2351,12 @@ namespace TaskManager
 			// aapt resource value: 0x7f080037
 			public const int SYM = 2131230775;
 			
+			// aapt resource value: 0x7f0800c0
+			public const int Settings = 2131230912;
+			
+			// aapt resource value: 0x7f0800c1
+			public const int about = 2131230913;
+			
 			// aapt resource value: 0x7f0800a7
 			public const int action0 = 2131230887;
 			
@@ -3146,13 +3152,16 @@ namespace TaskManager
 			public const int select_dialog_singlechoice_material = 2130968635;
 			
 			// aapt resource value: 0x7f04003c
-			public const int support_simple_spinner_dropdown_item = 2130968636;
+			public const int settings = 2130968636;
 			
 			// aapt resource value: 0x7f04003d
-			public const int task_row_view = 2130968637;
+			public const int support_simple_spinner_dropdown_item = 2130968637;
 			
 			// aapt resource value: 0x7f04003e
-			public const int tooltip = 2130968638;
+			public const int task_row_view = 2130968638;
+			
+			// aapt resource value: 0x7f04003f
+			public const int tooltip = 2130968639;
 			
 			static Layout()
 			{
@@ -3169,6 +3178,9 @@ namespace TaskManager
 			
 			// aapt resource value: 0x7f0e0000
 			public const int bottom_navigation_main = 2131623936;
+			
+			// aapt resource value: 0x7f0e0001
+			public const int main_activity_actions = 2131623937;
 			
 			static Menu()
 			{

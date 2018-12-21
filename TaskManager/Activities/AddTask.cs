@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml.Serialization;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -12,6 +14,7 @@ using Android.Views;
 using Android.Widget;
 using Java.Text;
 using Java.Util;
+using Newtonsoft.Json;
 using TaskManager.Model;
 using TaskManager.Service;
 using static Android.App.DatePickerDialog;
@@ -46,6 +49,11 @@ namespace TaskManager.Activities
             task = new Task();
         }
 
+        public override bool OnCreateOptionsMenu(IMenu menu)
+        {
+            return base.OnCreateOptionsMenu(menu);
+        }
+
         private void CancelAdd_Click(object sender, EventArgs e)
         {
             base.OnBackPressed();
@@ -61,9 +69,15 @@ namespace TaskManager.Activities
         {
             task.Name = FindViewById<EditText>(Resource.Id.name).Text;
             task.Description = FindViewById<EditText>(Resource.Id.description).Text;
-            var priority = FindViewById<Spinner>(Resource.Id.priority).SelectedItem;
-            TaskService.AddTask(task);
-            base.OnBackPressed();
+            task.Priority = (Priority)FindViewById<Spinner>(Resource.Id.priority).SelectedItemPosition;
+            task.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
+            if (this.task != null)
+            {
+                Intent newTask = new Intent(this, typeof(MainActivity));
+                newTask.PutExtra("addnewtask", JsonConvert.SerializeObject(this.task));
+                SetResult(Result.Ok, newTask);
+                Finish();
+            }
         }
 
         private void SetDueDatePicker()
@@ -114,6 +128,7 @@ namespace TaskManager.Activities
             this.hour = hourOfDay;
             this.minutes = minutes;
             var simpleDateFormat = new SimpleDateFormat("hh:mm");
+
             var date = new Date(0, 0, 0, hour, minutes);
             dueTime.Text = simpleDateFormat.Format(date);
         }

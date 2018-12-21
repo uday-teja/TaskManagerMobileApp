@@ -12,6 +12,8 @@ using Android.Views;
 using Android.Content;
 using TaskManager.Activities;
 using TaskManager.Adaptors;
+using System;
+using Newtonsoft.Json;
 
 namespace TaskManager
 {
@@ -21,6 +23,8 @@ namespace TaskManager
         public List<Task> RawTasks { get; set; }
         public ListView TaskList { get; set; }
         private TaskService TaskService { get; set; }
+        public Task Task { get; set; }
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -28,8 +32,9 @@ namespace TaskManager
             TaskService = new TaskService();
             RawTasks = TaskService.GetAll();
             TaskList = FindViewById<ListView>(Resource.Id.mainlistview);
-            TaskList.Adapter = new TaskListAdaptor(RawTasks);
+            Task = new Task();
             InitializeClickEvents();
+            LoadSelectedTasks(Resource.Id.action_new);
         }
 
         private void InitializeClickEvents()
@@ -41,9 +46,26 @@ namespace TaskManager
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
         }
 
+        private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
+        {
+            var t = RawTasks.FirstOrDefault(p => p.Id == e.Id + 1);
+            Toast.MakeText(this, t.Name, ToastLength.Short).Show();
+        }
+
+        private void FloatingActionButton_Click(object sender, EventArgs e)
+        {
+            var intent = new Intent(this, typeof(AddTask));
+            this.StartActivityForResult(intent, 1);
+        }
+
         private void BottomNavigation_NavigationItemSelected(object sender, BottomNavigationView.NavigationItemSelectedEventArgs e)
         {
-            switch (e.Item.ItemId)
+            LoadSelectedTasks(e.Item.ItemId);
+        }
+
+        private void LoadSelectedTasks(int id)
+        {
+            switch (id)
             {
                 case Resource.Id.action_new:
                     TaskList.Adapter = new TaskListAdaptor(RawTasks.Where(t => t.Status == Status.New).ToList());
@@ -59,22 +81,41 @@ namespace TaskManager
             }
         }
 
-        private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
+        public override bool OnCreateOptionsMenu(IMenu menu)
         {
-            var t = RawTasks.FirstOrDefault(p => p.Id == e.Id + 1);
-            Toast.MakeText(this, t.Name, ToastLength.Short).Show();
+            var inflator = MenuInflater;
+            inflator.Inflate(Resource.Menu.main_activity_actions, menu);
+            return base.OnCreateOptionsMenu(menu);
         }
 
-        private void FloatingActionButton_Click(object sender, System.EventArgs e)
+        public override bool OnOptionsItemSelected(IMenuItem item)
         {
-            var intent = new Intent(this, typeof(AddTask));
-            this.StartActivity(intent);
+            switch (item.ItemId)
+            {
+                case Resource.Id.Settings:
+                    var settings = new Intent(this, typeof(Settings));
+                    StartActivity(settings);
+                    break;
+            }
+            return base.OnOptionsItemSelected(item);
         }
 
-        protected override void OnRestart()
+        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
         {
-            base.OnRestart();
-            TaskList.Adapter = new TaskListAdaptor(TaskService.GetAll());
+            base.OnActivityResult(requestCode, resultCode, data);
+            if (resultCode != Result.Canceled)
+            {
+                if (requestCode == 1)
+                {
+                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("addnewtask"));
+                    if (task != null)
+                    {
+                        TaskService.AddTask(task);
+                        RawTasks.Add(task);
+                    }
+                    LoadSelectedTasks(Resource.Id.action_new);
+                }
+            }
         }
     }
 }

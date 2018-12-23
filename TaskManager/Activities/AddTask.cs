@@ -80,6 +80,22 @@ namespace TaskManager.Activities
             }
         }
 
+        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+        {
+            base.OnActivityResult(requestCode, resultCode, data);
+            if (resultCode != Result.Canceled)
+            {
+                if (requestCode == 1)
+                {
+                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("editTask"));
+                    if (task != null)
+                    {
+                        this.task = task;
+                    }
+                }
+            }
+        }
+
         private void SetDueDatePicker()
         {
             dueDate = FindViewById<EditText>(Resource.Id.due_date);

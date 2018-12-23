@@ -1,26 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Android.App;
-using Android.Content;
 using Android.Graphics;
-using Android.OS;
-using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Java.Lang;
 using TaskManager.Model;
-using static Android.Support.V7.Widget.RecyclerView;
+using Object = Java.Lang.Object;
 
 namespace TaskManager.Adaptors
 {
-    public class TaskListAdaptor : BaseAdapter<Task>
+    public class TaskListAdaptor : BaseAdapter<Task>, IFilterable
     {
-        private List<Task> tasks;
+        public List<Task> rawTasks;
+        public List<Task> tasks;
+        private readonly Activity activity;
+        public Filter Filter { get; private set; }
 
-        public TaskListAdaptor(List<Task> tasks)
+        public TaskListAdaptor(Activity activity, List<Task> tasks)
         {
+            this.activity = activity;
             this.tasks = tasks;
+            Filter = new TaskListFilter(this);
         }
 
         public override Task this[int position]
@@ -46,35 +47,25 @@ namespace TaskManager.Adaptors
 
         public override View GetView(int position, View convertView, ViewGroup parent)
         {
-            var view = convertView;
-            if (view == null)
+            var view = convertView ?? activity.LayoutInflater.Inflate(Resource.Layout.task_row_view, null);
+            var task = tasks[position];
+            var name = view.FindViewById<TextView>(Resource.Id.taskName);
+            var description = view.FindViewById<TextView>(Resource.Id.taskDescription);
+            var priorityColor = view.FindViewById<LinearLayout>(Resource.Id.task_row_status);
+            switch (task.Priority)
             {
-                view = LayoutInflater.From(parent.Context).Inflate(Resource.Layout.task_row_view, parent, false);
-                var name = view.FindViewById<TextView>(Resource.Id.taskName);
-                var description = view.FindViewById<TextView>(Resource.Id.taskDescription);
-                var priorityColor = view.FindViewById<LinearLayout>(Resource.Id.task_row_status);
-                switch (tasks[position].Priority)
-                {
-                    case Priority.Low:
-                        priorityColor.SetBackgroundColor(Color.ParseColor("#D3D3D3"));
-                        break;
-                    case Priority.Medium:
-                        priorityColor.SetBackgroundColor(Color.ParseColor("#fbbf79"));
-                        break;
-                    case Priority.High:
-                        priorityColor.SetBackgroundColor(Color.ParseColor("#bd322c"));
-                        break;
-                }
-                view.Tag = new ViewHolder()
-                {
-                    Name = name,
-                    Description = description,
-                    PriorityColor = priorityColor
-                };
-            };
-            var holder = (ViewHolder)view.Tag;
-            holder.Name.Text = tasks[position].Name;
-            holder.Description.Text = tasks[position].Description;
+                case Priority.Low:
+                    priorityColor.SetBackgroundColor(Color.ParseColor("#D3D3D3"));
+                    break;
+                case Priority.Medium:
+                    priorityColor.SetBackgroundColor(Color.ParseColor("#fbbf79"));
+                    break;
+                case Priority.High:
+                    priorityColor.SetBackgroundColor(Color.ParseColor("#bd322c"));
+                    break;
+            }
+            name.Text = task.Name;
+            description.Text = task.Description;
             return view;
         }
     }

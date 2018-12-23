@@ -44,12 +44,23 @@ namespace TaskManager
             floatingActionButton.Click += FloatingActionButton_Click;
             var bottomNavigation = FindViewById<BottomNavigationView>(Resource.Id.bottom_navigation);
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
+            var search = FindViewById<EditText>(Resource.Id.searchText);
+            search.TextChanged += Search_TextChanged;
+        }
+
+        private void Search_TextChanged(object sender, Android.Text.TextChangedEventArgs e)
+        {
+            ((TaskListAdaptor)TaskList.Adapter).Filter.InvokeFilter(e.Text.ToString());
         }
 
         private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
-            var t = RawTasks.FirstOrDefault(p => p.Id == e.Id + 1);
-            Toast.MakeText(this, t.Name, ToastLength.Short).Show();
+            //var t = RawTasks.FirstOrDefault(p => p.Id == e.Id + 1);
+            //Toast.MakeText(this, t.Name, ToastLength.Short).Show();
+            Intent newTask = new Intent(this, typeof(AddTask));
+            newTask.PutExtra("editTask", JsonConvert.SerializeObject(this.RawTasks.FirstOrDefault(p => p.Id == e.Id + 1)));
+            SetResult(Result.Ok, newTask);
+            StartActivityForResult(newTask,1);
         }
 
         private void FloatingActionButton_Click(object sender, EventArgs e)
@@ -68,17 +79,20 @@ namespace TaskManager
             switch (id)
             {
                 case Resource.Id.action_new:
-                    TaskList.Adapter = new TaskListAdaptor(RawTasks.Where(t => t.Status == Status.New).ToList());
+                    TaskList.Adapter = GetTasks(Status.New);
                     break;
                 case Resource.Id.action_in_progress:
-                    TaskList.Adapter = new TaskListAdaptor(RawTasks.Where(t => t.Status == Status.InProgress).ToList());
+                    TaskList.Adapter = GetTasks(Status.InProgress);
                     break;
                 case Resource.Id.action_completed:
-                    TaskList.Adapter = new TaskListAdaptor(RawTasks.Where(t => t.Status == Status.Completed).ToList());
-                    break;
-                default:
+                    TaskList.Adapter = GetTasks(Status.Completed);
                     break;
             }
+        }
+
+        private TaskListAdaptor GetTasks(Status status)
+        {
+            return new TaskListAdaptor(this, RawTasks.Where(t => t.Status == status).ToList());
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)

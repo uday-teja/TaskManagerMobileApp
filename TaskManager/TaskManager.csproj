@@ -60,6 +60,7 @@
     <Compile Include="Activities\MainActivity.cs" />
     <Compile Include="Activities\Settings.cs" />
     <Compile Include="Adaptors\TaskListAdaptor.cs" />
+    <Compile Include="Adaptors\TaskListFilter.cs" />
     <Compile Include="Model\Task.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

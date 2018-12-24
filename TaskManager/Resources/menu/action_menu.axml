@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu 
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:android="http://schemas.android.com/apk/res/android">
   <item
-       android:id="@+id/menu_edit"
-       android:showAsAction="ifRoom"
+       android:id="@+id/edit"
+       android:icon="@android:drawable/ic_menu_edit"
+       app:showAsAction="always"
        android:title="Edit" />
   <item
-       android:id="@+id/menu_save"
-       android:showAsAction="ifRoom"
-       android:title="Save" />
-  <item
-       android:id="@+id/menu_preferences"
-       android:showAsAction="never"
-       android:title="Preferences" />
+       android:id="@+id/delete"
+       android:icon="@android:drawable/ic_menu_delete"
+       app:showAsAction="always"
+       android:title="Delete" />
 </menu>

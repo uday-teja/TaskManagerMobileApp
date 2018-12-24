@@ -8,7 +8,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Support.V7.App;
 using Android.Views;
-using Android.Widget;
+using Android.Support.V7.Widget;
 
 namespace TaskManager.Activities
 {
@@ -18,8 +18,11 @@ namespace TaskManager.Activities
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
             SetContentView(Resource.Layout.settings);
+            var toolbar = FindViewById<Toolbar>(Resource.Id.toolbar);
+            SetSupportActionBar(toolbar);
+            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
+            SupportActionBar.SetHomeButtonEnabled(true);
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)

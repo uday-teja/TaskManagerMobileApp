@@ -29,12 +29,19 @@ namespace TaskManager
         {
             base.OnCreate(savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
+            TaskList = FindViewById<ListView>(Resource.Id.mainlistview);
+            var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
+            SetSupportActionBar(toolbar);
             TaskService = new TaskService();
             RawTasks = TaskService.GetAll();
-            TaskList = FindViewById<ListView>(Resource.Id.mainlistview);
-            Task = new Task();
             InitializeClickEvents();
             LoadSelectedTasks(Resource.Id.action_new);
+        }
+
+        public override bool OnCreateOptionsMenu(IMenu menu)
+        {
+            MenuInflater.Inflate(Resource.Menu.main_activity_actions, menu);
+            return base.OnCreateOptionsMenu(menu);
         }
 
         private void InitializeClickEvents()
@@ -46,6 +53,15 @@ namespace TaskManager
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
             var search = FindViewById<EditText>(Resource.Id.searchText);
             search.TextChanged += Search_TextChanged;
+            TaskList.LongClick += TaskList_LongClick;
+        }
+
+        private void TaskList_LongClick(object sender, View.LongClickEventArgs e)
+        {
+            var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
+            SetSupportActionBar(toolbar);
+            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
+            SupportActionBar.SetHomeButtonEnabled(true);
         }
 
         private void Search_TextChanged(object sender, Android.Text.TextChangedEventArgs e)
@@ -55,7 +71,7 @@ namespace TaskManager
 
         private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
-            Intent taskDetails = new Intent(this, typeof(TaskDetails));
+            var taskDetails = new Intent(this, typeof(TaskDetails));
             taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.RawTasks.ElementAt((int)e.Id)));
             StartActivity(taskDetails);
         }
@@ -90,13 +106,6 @@ namespace TaskManager
         private TaskListAdaptor GetTasks(Status status)
         {
             return new TaskListAdaptor(this, RawTasks.Where(t => t.Status == status).ToList());
-        }
-
-        public override bool OnCreateOptionsMenu(IMenu menu)
-        {
-            var inflator = MenuInflater;
-            inflator.Inflate(Resource.Menu.main_activity_actions, menu);
-            return base.OnCreateOptionsMenu(menu);
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)

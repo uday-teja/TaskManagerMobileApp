@@ -4,7 +4,6 @@
         android:id="@+id/Settings"
         android:title="Settings"
         android:showAsAction="always" />
-  
   <item
         android:id="@+id/about"
         android:title="About"

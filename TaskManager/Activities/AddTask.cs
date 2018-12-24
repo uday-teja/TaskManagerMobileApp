@@ -36,8 +36,11 @@ namespace TaskManager.Activities
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
             SetContentView(Resource.Layout.add_task);
+            var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
+            SetSupportActionBar(toolbar);
+            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
+            SupportActionBar.SetHomeButtonEnabled(true);
             SetStatusSpinner();
             SetDueDatePicker();
             SetPrioritySpinner();
@@ -47,6 +50,20 @@ namespace TaskManager.Activities
             cancelAdd.Click += CancelAdd_Click;
             TaskService = new TaskService();
             task = new Task();
+            var isUpdate = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
+            if (isUpdate != string.Empty)
+                EditTask();
+        }
+
+        private void EditTask()
+        {
+            task = JsonConvert.DeserializeObject<Task>(Intent.GetStringExtra("SelectedTask"));
+            FindViewById<TextView>(Resource.Id.name).Text = task.Name;
+            FindViewById<TextView>(Resource.Id.description).Text = task.Description;
+            FindViewById<Spinner>(Resource.Id.status).SetSelection((int)task.Status);
+            FindViewById<Spinner>(Resource.Id.priority).SetSelection((int)task.Priority);
+            FindViewById<TextView>(Resource.Id.due_date).Text = task.DueDate.ToShortDateString();
+            FindViewById<TextView>(Resource.Id.due_time).Text = task.DueDate.ToShortTimeString();
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -71,6 +88,9 @@ namespace TaskManager.Activities
             task.Description = FindViewById<EditText>(Resource.Id.description).Text;
             task.Priority = (Priority)FindViewById<Spinner>(Resource.Id.priority).SelectedItemPosition;
             task.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
+            var date = $"{FindViewById<EditText>(Resource.Id.due_date).Text}{FindViewById<EditText>(Resource.Id.due_time).Text}";
+            //if (date != string.Empty)
+            //    task.DueDate = Convert.ToDateTime(date);
             if (this.task != null)
             {
                 Intent newTask = new Intent(this, typeof(MainActivity));

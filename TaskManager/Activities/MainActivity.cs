@@ -55,12 +55,9 @@ namespace TaskManager
 
         private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
-            //var t = RawTasks.FirstOrDefault(p => p.Id == e.Id + 1);
-            //Toast.MakeText(this, t.Name, ToastLength.Short).Show();
-            Intent newTask = new Intent(this, typeof(AddTask));
-            newTask.PutExtra("editTask", JsonConvert.SerializeObject(this.RawTasks.FirstOrDefault(p => p.Id == e.Id + 1)));
-            SetResult(Result.Ok, newTask);
-            StartActivityForResult(newTask,1);
+            Intent taskDetails = new Intent(this, typeof(TaskDetails));
+            taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.RawTasks.ElementAt((int)e.Id)));
+            StartActivity(taskDetails);
         }
 
         private void FloatingActionButton_Click(object sender, EventArgs e)

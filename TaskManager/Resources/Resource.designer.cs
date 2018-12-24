@@ -2351,11 +2351,11 @@ namespace TaskManager
 			// aapt resource value: 0x7f080037
 			public const int SYM = 2131230775;
 			
-			// aapt resource value: 0x7f0800c1
-			public const int Settings = 2131230913;
+			// aapt resource value: 0x7f0800ca
+			public const int Settings = 2131230922;
 			
-			// aapt resource value: 0x7f0800c2
-			public const int about = 2131230914;
+			// aapt resource value: 0x7f0800cb
+			public const int about = 2131230923;
 			
 			// aapt resource value: 0x7f0800a8
 			public const int action0 = 2131230888;
@@ -2381,8 +2381,8 @@ namespace TaskManager
 			// aapt resource value: 0x7f08005a
 			public const int action_bar_title = 2131230810;
 			
-			// aapt resource value: 0x7f0800c0
-			public const int action_completed = 2131230912;
+			// aapt resource value: 0x7f0800c9
+			public const int action_completed = 2131230921;
 			
 			// aapt resource value: 0x7f0800a5
 			public const int action_container = 2131230885;
@@ -2396,8 +2396,8 @@ namespace TaskManager
 			// aapt resource value: 0x7f0800a6
 			public const int action_image = 2131230886;
 			
-			// aapt resource value: 0x7f0800bf
-			public const int action_in_progress = 2131230911;
+			// aapt resource value: 0x7f0800c8
+			public const int action_in_progress = 2131230920;
 			
 			// aapt resource value: 0x7f080003
 			public const int action_menu_divider = 2131230723;
@@ -2414,8 +2414,8 @@ namespace TaskManager
 			// aapt resource value: 0x7f08005c
 			public const int action_mode_close_button = 2131230812;
 			
-			// aapt resource value: 0x7f0800be
-			public const int action_new = 2131230910;
+			// aapt resource value: 0x7f0800c7
+			public const int action_new = 2131230919;
 			
 			// aapt resource value: 0x7f0800a7
 			public const int action_text = 2131230887;
@@ -2633,14 +2633,23 @@ namespace TaskManager
 			// aapt resource value: 0x7f08008c
 			public const int mainlistview = 2131230860;
 			
-			// aapt resource value: 0x7f0800bd
-			public const int masked = 2131230909;
+			// aapt resource value: 0x7f0800c3
+			public const int masked = 2131230915;
 			
 			// aapt resource value: 0x7f0800ab
 			public const int media_actions = 2131230891;
 			
-			// aapt resource value: 0x7f0800bb
-			public const int message = 2131230907;
+			// aapt resource value: 0x7f0800c4
+			public const int menu_edit = 2131230916;
+			
+			// aapt resource value: 0x7f0800c6
+			public const int menu_preferences = 2131230918;
+			
+			// aapt resource value: 0x7f0800c5
+			public const int menu_save = 2131230917;
+			
+			// aapt resource value: 0x7f0800c1
+			public const int message = 2131230913;
 			
 			// aapt resource value: 0x7f080031
 			public const int middle = 2131230769;
@@ -2831,14 +2840,32 @@ namespace TaskManager
 			// aapt resource value: 0x7f080019
 			public const int tag_transition_group = 2131230745;
 			
-			// aapt resource value: 0x7f0800ba
-			public const int taskDescription = 2131230906;
+			// aapt resource value: 0x7f0800c0
+			public const int taskDescription = 2131230912;
 			
 			// aapt resource value: 0x7f0800b9
-			public const int taskName = 2131230905;
+			public const int taskDetaildescription = 2131230905;
+			
+			// aapt resource value: 0x7f0800bb
+			public const int taskDetaildue_date = 2131230907;
+			
+			// aapt resource value: 0x7f0800bc
+			public const int taskDetaildue_time = 2131230908;
+			
+			// aapt resource value: 0x7f0800bd
+			public const int taskDetailpriority = 2131230909;
+			
+			// aapt resource value: 0x7f0800ba
+			public const int taskDetailstatus = 2131230906;
+			
+			// aapt resource value: 0x7f0800bf
+			public const int taskName = 2131230911;
+			
+			// aapt resource value: 0x7f0800be
+			public const int task_row_status = 2131230910;
 			
 			// aapt resource value: 0x7f0800b8
-			public const int task_row_status = 2131230904;
+			public const int taskdetailname = 2131230904;
 			
 			// aapt resource value: 0x7f08001a
 			public const int text = 2131230746;
@@ -2909,8 +2936,8 @@ namespace TaskManager
 			// aapt resource value: 0x7f080016
 			public const int view_offset_helper = 2131230742;
 			
-			// aapt resource value: 0x7f0800bc
-			public const int visible = 2131230908;
+			// aapt resource value: 0x7f0800c2
+			public const int visible = 2131230914;
 			
 			// aapt resource value: 0x7f08003c
 			public const int withText = 2131230780;
@@ -3161,10 +3188,13 @@ namespace TaskManager
 			public const int support_simple_spinner_dropdown_item = 2130968637;
 			
 			// aapt resource value: 0x7f04003e
-			public const int task_row_view = 2130968638;
+			public const int task_details = 2130968638;
 			
 			// aapt resource value: 0x7f04003f
-			public const int tooltip = 2130968639;
+			public const int task_row_view = 2130968639;
+			
+			// aapt resource value: 0x7f040040
+			public const int tooltip = 2130968640;
 			
 			static Layout()
 			{
@@ -3180,10 +3210,13 @@ namespace TaskManager
 		{
 			
 			// aapt resource value: 0x7f0e0000
-			public const int bottom_navigation_main = 2131623936;
+			public const int action_menu = 2131623936;
 			
 			// aapt resource value: 0x7f0e0001
-			public const int main_activity_actions = 2131623937;
+			public const int bottom_navigation_main = 2131623937;
+			
+			// aapt resource value: 0x7f0e0002
+			public const int main_activity_actions = 2131623938;
 			
 			static Menu()
 			{

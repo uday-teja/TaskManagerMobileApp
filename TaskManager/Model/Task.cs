@@ -49,9 +49,9 @@ namespace TaskManager.Model
 
     public enum Priority
     {
-        High,
         Low,
-        Medium
+        Medium,
+        High
     }
 
     public enum Crud

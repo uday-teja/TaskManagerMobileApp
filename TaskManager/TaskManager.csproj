@@ -59,6 +59,7 @@
     <Compile Include="Activities\AddTask.cs" />
     <Compile Include="Activities\MainActivity.cs" />
     <Compile Include="Activities\Settings.cs" />
+    <Compile Include="Activities\TaskDetails.cs" />
     <Compile Include="Adaptors\TaskListAdaptor.cs" />
     <Compile Include="Adaptors\TaskListFilter.cs" />
     <Compile Include="Model\Task.cs" />
@@ -132,6 +133,16 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\settings.axml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\task_details.axml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\menu\action_menu.axml">
       <SubType>Designer</SubType>
     </AndroidResource>
   </ItemGroup>

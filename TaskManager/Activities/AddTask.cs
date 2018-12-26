@@ -44,10 +44,6 @@ namespace TaskManager.Activities
             SetStatusSpinner();
             SetDueDatePicker();
             SetPrioritySpinner();
-            var addTask = FindViewById<Button>(Resource.Id.add_button);
-            addTask.Click += AddTask_Click;
-            var cancelAdd = FindViewById<Button>(Resource.Id.cancel_button);
-            cancelAdd.Click += CancelAdd_Click;
             TaskService = new TaskService();
             task = new Task();
             var isUpdate = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
@@ -68,12 +64,8 @@ namespace TaskManager.Activities
 
         public override bool OnCreateOptionsMenu(IMenu menu)
         {
+            MenuInflater.Inflate(Resource.Menu.item_actions, menu);
             return base.OnCreateOptionsMenu(menu);
-        }
-
-        private void CancelAdd_Click(object sender, EventArgs e)
-        {
-            base.OnBackPressed();
         }
 
         private void SetPrioritySpinner()
@@ -82,7 +74,7 @@ namespace TaskManager.Activities
             priority.Adapter = new ArrayAdapter<string>(this, Resource.Layout.support_simple_spinner_dropdown_item, Enum.GetValues(typeof(Priority)).Cast<Priority>().Select(e => e.ToString()).ToArray());
         }
 
-        private void AddTask_Click(object sender, EventArgs e)
+        private void AddTask_Click()
         {
             task.Name = FindViewById<EditText>(Resource.Id.name).Text;
             task.Description = FindViewById<EditText>(Resource.Id.description).Text;
@@ -148,8 +140,15 @@ namespace TaskManager.Activities
 
         public override bool OnOptionsItemSelected(IMenuItem item)
         {
-            if (item.ItemId == Android.Resource.Id.Home)
-                this.OnBackPressed();
+            switch (item.ItemId)
+            {
+                case Android.Resource.Id.Home:
+                    this.OnBackPressed();
+                    break;
+                case Resource.Menu.action_menu:
+                    this.AddTask_Click();
+                    break;
+            }
             return base.OnOptionsItemSelected(item);
         }
 

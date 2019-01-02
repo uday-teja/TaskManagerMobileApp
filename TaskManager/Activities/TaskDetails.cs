@@ -30,6 +30,8 @@ namespace TaskManager.Activities
             FindViewById<TextView>(Resource.Id.taskDetaildescription).Text = SelectedTask.Description;
             FindViewById<TextView>(Resource.Id.taskDetailpriority).Text = SelectedTask.Priority.ToString();
             FindViewById<TextView>(Resource.Id.taskDetailstatus).Text = SelectedTask.Status.ToString();
+            FindViewById<TextView>(Resource.Id.taskDetaildue_date).Text = SelectedTask.DueDate.ToShortDateString();
+            FindViewById<TextView>(Resource.Id.taskDetaildue_time).Text = SelectedTask.DueDate.ToShortTimeString();
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)
@@ -40,15 +42,20 @@ namespace TaskManager.Activities
                     this.OnBackPressed();
                     break;
                 case Resource.Id.edit:
-                    Intent addTask = new Intent(this, typeof(AddTask));
-                    addTask.PutExtra("SelectedTask", JsonConvert.SerializeObject(this.SelectedTask));
-                    StartActivity(addTask);
+                    EditTask();
                     break;
                 case Resource.Id.delete:
                     DeleteTask();
                     break;
             }
             return base.OnOptionsItemSelected(item);
+        }
+
+        private void EditTask()
+        {
+            Intent addTask = new Intent(this, typeof(AddTask));
+            addTask.PutExtra("SelectedTask", JsonConvert.SerializeObject(this.SelectedTask));
+            this.StartActivityForResult(addTask, 1);
         }
 
         private void DeleteTask()
@@ -63,7 +70,8 @@ namespace TaskManager.Activities
             if (this.SelectedTask != null)
             {
                 Intent deleteTask = new Intent(this, typeof(MainActivity));
-                deleteTask.PutExtra("addnewtask", JsonConvert.SerializeObject(SelectedTask));
+                deleteTask.PutExtra("type", JsonConvert.SerializeObject(Crud.Delete));
+                deleteTask.PutExtra("task", JsonConvert.SerializeObject(SelectedTask));
                 SetResult(Result.Ok, deleteTask);
                 Finish();
             }
@@ -73,6 +81,19 @@ namespace TaskManager.Activities
         {
             MenuInflater.Inflate(Resource.Menu.action_menu, menu);
             return base.OnCreateOptionsMenu(menu);
+        }
+
+        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+        {
+            base.OnActivityResult(requestCode, resultCode, data);
+            if (resultCode != Result.Canceled)
+            {
+                if (requestCode == 1)
+                {
+                    SetResult(Result.Ok, data);
+                    Finish();
+                }
+            }
         }
     }
 }

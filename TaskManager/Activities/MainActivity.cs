@@ -21,6 +21,7 @@ namespace TaskManager
     public class MainActivity : AppCompatActivity
     {
         public List<Task> RawTasks { get; set; }
+        public List<Task> Tasks { get; set; }
         public ListView TaskList { get; set; }
         private TaskService TaskService { get; set; }
         public Task Task { get; set; }
@@ -38,22 +39,23 @@ namespace TaskManager
             LoadSelectedTasks(Resource.Id.action_new);
         }
 
-        public override bool OnCreateOptionsMenu(IMenu menu)
-        {
-            MenuInflater.Inflate(Resource.Menu.main_activity_actions, menu);
-            return base.OnCreateOptionsMenu(menu);
-        }
-
         private void InitializeClickEvents()
         {
             TaskList.ItemClick += TaskList_ItemClick;
             var floatingActionButton = FindViewById<FloatingActionButton>(Resource.Id.floating_add_button);
+            floatingActionButton.SetImageResource(Resource.Drawable.addnew);
             floatingActionButton.Click += FloatingActionButton_Click;
             var bottomNavigation = FindViewById<BottomNavigationView>(Resource.Id.bottom_navigation);
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
             var search = FindViewById<EditText>(Resource.Id.searchText);
             search.TextChanged += Search_TextChanged;
             TaskList.LongClick += TaskList_LongClick;
+        }
+
+        public override bool OnCreateOptionsMenu(IMenu menu)
+        {
+            MenuInflater.Inflate(Resource.Menu.main_activity_actions, menu);
+            return base.OnCreateOptionsMenu(menu);
         }
 
         private void TaskList_LongClick(object sender, View.LongClickEventArgs e)
@@ -72,8 +74,8 @@ namespace TaskManager
         private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
             var taskDetails = new Intent(this, typeof(TaskDetails));
-            taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.RawTasks.ElementAt((int)e.Id)));
-            StartActivity(taskDetails);
+            taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.Tasks.ElementAt((int)e.Id)));
+            this.StartActivityForResult(taskDetails, 2);
         }
 
         private void FloatingActionButton_Click(object sender, EventArgs e)
@@ -105,7 +107,8 @@ namespace TaskManager
 
         private TaskListAdaptor GetTasks(Status status)
         {
-            return new TaskListAdaptor(this, RawTasks.Where(t => t.Status == status).ToList());
+            this.Tasks = RawTasks.Where(t => t.Status == status).ToList();
+            return new TaskListAdaptor(this, this.Tasks);
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)
@@ -122,20 +125,36 @@ namespace TaskManager
 
         protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
         {
-            base.OnActivityResult(requestCode, resultCode, data);
             if (resultCode != Result.Canceled)
             {
                 if (requestCode == 1)
                 {
-                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("addnewtask"));
+                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("newtask"));
                     if (task != null)
                     {
                         TaskService.AddTask(task);
-                        RawTasks.Add(task);
+                        RawTasks.Add(TaskService.GetLast());
                     }
-                    LoadSelectedTasks(Resource.Id.action_new);
+                }
+                else if (requestCode == 2)
+                {
+                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("task"));
+                    switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
+                    {
+                        case Crud.Update:
+                            TaskService.UpdateTask(task);
+                            RawTasks.Remove(task);
+                            RawTasks.Add(task);
+                            break;
+                        case Crud.Delete:
+                            TaskService.DeleteTask(task);
+                            RawTasks.Remove(task);
+                            break;
+                    }
                 }
             }
+            LoadSelectedTasks(Resource.Id.action_new);
+            base.OnActivityResult(requestCode, resultCode, data);
         }
     }
 }

@@ -40,6 +40,9 @@
        android:layout_marginBottom="70dp"
        android:layout_alignParentBottom="true"
        android:layout_alignParentRight="true" 
+	   app:itemBackground="@color/colorPrimary"
+	   app:itemIconTint="@color/white"
+       app:itemTextColor="@color/white"
 	/>
 
     <android.support.design.widget.BottomNavigationView
@@ -48,7 +51,8 @@
       android:layout_height="56dp"
       android:layout_alignParentBottom="true"
       app:itemBackground="@color/colorPrimary"
-	  app:itemTextColor="@color/white"
+      app:itemIconTint="@color/white"
+      app:itemTextColor="@color/white"
       app:menu="@menu/bottom_navigation_main" 
 	/>
 

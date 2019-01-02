@@ -54,6 +54,14 @@ namespace TaskManager.Service
             PerformCRUD(task, Crud.DeleteAll);
         }
 
+        public Task GetLast()
+        {
+            using (var db = new SQLiteConnection(databaseFileName))
+            {
+                return db.Table<Task>().OrderByDescending(s => s.Id).FirstOrDefault();
+            }
+        }
+
         private void PerformCRUD(Task task, Crud crud)
         {
             try

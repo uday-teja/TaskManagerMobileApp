@@ -7,15 +7,18 @@
       android:id="@+id/action_new"
       android:enabled="true"
       android:title="New"
+       android:icon="@drawable/newtasks"
       app:showAsAction="ifRoom" />
   <item
       android:id="@+id/action_in_progress"
       android:enabled="true"
       android:title="In Progress"
+      android:icon="@drawable/inprogress"
       app:showAsAction="ifRoom" />
   <item
       android:id="@+id/action_completed"
       android:enabled="true"
       android:title="Completed"
+      android:icon="@drawable/completed"
       app:showAsAction="ifRoom" />
 </menu>

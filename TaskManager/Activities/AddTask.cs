@@ -32,6 +32,7 @@ namespace TaskManager.Activities
         private int minutes = 0;
         private TaskService TaskService;
         private Task task;
+        private bool isUpdate;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -46,9 +47,12 @@ namespace TaskManager.Activities
             SetPrioritySpinner();
             TaskService = new TaskService();
             task = new Task();
-            var isUpdate = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
-            if (isUpdate != string.Empty)
+            var selectedTask = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
+            if (selectedTask != string.Empty)
+            {
+                isUpdate = true;
                 EditTask();
+            }
         }
 
         private void EditTask()
@@ -58,8 +62,9 @@ namespace TaskManager.Activities
             FindViewById<TextView>(Resource.Id.description).Text = task.Description;
             FindViewById<Spinner>(Resource.Id.status).SetSelection((int)task.Status);
             FindViewById<Spinner>(Resource.Id.priority).SetSelection((int)task.Priority);
-            FindViewById<TextView>(Resource.Id.due_date).Text = task.DueDate.ToShortDateString();
-            FindViewById<TextView>(Resource.Id.due_time).Text = task.DueDate.ToShortTimeString();
+            FindViewById<TextView>(Resource.Id.due_date).Text = task.DueDate.ToString("MM/dd/yyyy");
+            FindViewById<TextView>(Resource.Id.due_time).Text = task.DueDate.ToString("hh:mm tt");
+            SetTitle(Resource.String.update_task);
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -80,13 +85,21 @@ namespace TaskManager.Activities
             task.Description = FindViewById<EditText>(Resource.Id.description).Text;
             task.Priority = (Priority)FindViewById<Spinner>(Resource.Id.priority).SelectedItemPosition;
             task.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
-            var date = $"{FindViewById<EditText>(Resource.Id.due_date).Text}{FindViewById<EditText>(Resource.Id.due_time).Text}";
-            //if (date != string.Empty)
-            //    task.DueDate = Convert.ToDateTime(date);
-            if (this.task != null)
+            var date = $"{FindViewById<EditText>(Resource.Id.due_date).Text} {FindViewById<EditText>(Resource.Id.due_time).Text}";
+            if (date != string.Empty || date != " ")
+                task.DueDate = Convert.ToDateTime(date);
+            if (isUpdate)
+            {
+                Intent updateTask = new Intent(this, typeof(AddTask));
+                updateTask.PutExtra("type", JsonConvert.SerializeObject(Crud.Update));
+                updateTask.PutExtra("task", JsonConvert.SerializeObject(this.task));
+                SetResult(Result.Ok, updateTask);
+                Finish();
+            }
+            else
             {
                 Intent newTask = new Intent(this, typeof(MainActivity));
-                newTask.PutExtra("addnewtask", JsonConvert.SerializeObject(this.task));
+                newTask.PutExtra("newtask", JsonConvert.SerializeObject(this.task));
                 SetResult(Result.Ok, newTask);
                 Finish();
             }
@@ -145,7 +158,7 @@ namespace TaskManager.Activities
                 case Android.Resource.Id.Home:
                     this.OnBackPressed();
                     break;
-                case Resource.Menu.action_menu:
+                case Resource.Id.action_new:
                     this.AddTask_Click();
                     break;
             }

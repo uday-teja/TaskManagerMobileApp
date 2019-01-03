@@ -74,10 +74,10 @@ namespace TaskManager.Service
                             db.Insert(task);
                             break;
                         case Crud.Delete:
-                            db.Update(task);
+                            db.Execute("delete from Task where Id = ?", task.Id);
                             break;
                         case Crud.Update:
-                            db.Delete(task);
+                            db.Update(task);
                             break;
                         case Crud.Get:
                             this.task = db.Get<Task>(task.Id);

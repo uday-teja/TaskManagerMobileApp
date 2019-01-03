@@ -31,7 +31,7 @@ namespace TaskManager.Activities
             FindViewById<TextView>(Resource.Id.taskDetailpriority).Text = SelectedTask.Priority.ToString();
             FindViewById<TextView>(Resource.Id.taskDetailstatus).Text = SelectedTask.Status.ToString();
             FindViewById<TextView>(Resource.Id.taskDetaildue_date).Text = SelectedTask.DueDate.ToShortDateString();
-            FindViewById<TextView>(Resource.Id.taskDetaildue_time).Text = SelectedTask.DueDate.ToShortTimeString();
+            FindViewById<TextView>(Resource.Id.taskDetaildue_time).Text = SelectedTask.DueDate.ToString("hh:mm tt").ToUpper();
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)

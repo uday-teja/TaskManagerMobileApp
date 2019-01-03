@@ -28,8 +28,6 @@ namespace TaskManager.Activities
         private EditText dueDate;
         private EditText dueTime;
         private Calendar calendar;
-        private int hour = 7;
-        private int minutes = 0;
         private TaskService TaskService;
         private Task task;
         private bool isUpdate;
@@ -47,6 +45,7 @@ namespace TaskManager.Activities
             SetPrioritySpinner();
             TaskService = new TaskService();
             task = new Task();
+            calendar = Calendar.Instance;
             var selectedTask = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
             if (selectedTask != string.Empty)
             {
@@ -62,8 +61,8 @@ namespace TaskManager.Activities
             FindViewById<TextView>(Resource.Id.description).Text = task.Description;
             FindViewById<Spinner>(Resource.Id.status).SetSelection((int)task.Status);
             FindViewById<Spinner>(Resource.Id.priority).SetSelection((int)task.Priority);
-            FindViewById<TextView>(Resource.Id.due_date).Text = task.DueDate.ToString("MM/dd/yyyy");
-            FindViewById<TextView>(Resource.Id.due_time).Text = task.DueDate.ToString("hh:mm tt");
+            FindViewById<TextView>(Resource.Id.due_date).Text = task.DueDate.ToShortDateString();
+            FindViewById<TextView>(Resource.Id.due_time).Text = task.DueDate.ToString("hh:mm tt").ToUpper();
             SetTitle(Resource.String.update_task);
         }
 
@@ -86,8 +85,8 @@ namespace TaskManager.Activities
             task.Priority = (Priority)FindViewById<Spinner>(Resource.Id.priority).SelectedItemPosition;
             task.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
             var date = $"{FindViewById<EditText>(Resource.Id.due_date).Text} {FindViewById<EditText>(Resource.Id.due_time).Text}";
-            //if (date != string.Empty || date != " ")
-            //    task.DueDate = Convert.ToDateTime(date);
+            if (date != " ")
+                task.DueDate = Convert.ToDateTime(date);
             if (isUpdate)
             {
                 Intent updateTask = new Intent(this, typeof(AddTask));
@@ -131,16 +130,31 @@ namespace TaskManager.Activities
 
         private void DueTime_Click(object sender, EventArgs e)
         {
-            var timePickerDialog = new TimePickerDialog(this, this, hour, minutes, true);
+            int hour = 7, minutes = 0;
+            if (this.isUpdate)
+            {
+                hour = this.task.DueDate.Hour;
+                minutes = this.task.DueDate.Minute;
+            }
+            var timePickerDialog = new TimePickerDialog(this, this, hour, minutes, false);
             timePickerDialog.Show();
         }
 
         private void DueDate_Click(object sender, EventArgs e)
         {
-            calendar = Calendar.Instance;
-            int year = calendar.Get(CalendarField.Year);
-            int month = calendar.Get(CalendarField.Month);
-            int day = calendar.Get(CalendarField.DayOfMonth);
+            int year, month, day;
+            if (this.isUpdate)
+            {
+                year = this.task.DueDate.Year;
+                month = this.task.DueDate.Month;
+                day = this.task.DueDate.Day;
+            }
+            else
+            {
+                year = calendar.Get(CalendarField.Year);
+                month = calendar.Get(CalendarField.Month);
+                day = calendar.Get(CalendarField.DayOfMonth);
+            }
             var datePickerDialog = new DatePickerDialog(this, this, year, month, day);
             datePickerDialog.Show();
         }
@@ -173,11 +187,11 @@ namespace TaskManager.Activities
 
         public void OnTimeSet(TimePicker view, int hourOfDay, int minutes)
         {
-            this.hour = hourOfDay;
-            this.minutes = minutes;
-            var simpleDateFormat = new SimpleDateFormat("hh:mm");
+            //var date = new DateTime(0, 0, 0, hourOfDay, minutes, 0);
+            //dueTime.Text = date.ToString("hh:mm tt").ToUpper();
 
-            var date = new Date(0, 0, 0, hour, minutes);
+            var simpleDateFormat = new SimpleDateFormat("hh:mm a");
+            var date = new Date(0, 0, 0, hourOfDay, minutes);
             dueTime.Text = simpleDateFormat.Format(date);
         }
     }

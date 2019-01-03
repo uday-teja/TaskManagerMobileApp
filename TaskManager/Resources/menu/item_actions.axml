@@ -7,10 +7,9 @@
       android:id="@+id/action_new"
       android:enabled="true"
       android:title="New"
-      app:itemBackground="@color/colorPrimary"
+      android:icon="@drawable/done"
+      android:tint="@android:color/white"
       app:itemIconTint="@color/white"
-      app:itemTextColor="@color/white"
-      android:icon="?android:attr/textCheckMark"
       app:showAsAction="ifRoom" />
   
 </menu>

@@ -7,7 +7,7 @@
       android:id="@+id/action_new"
       android:enabled="true"
       android:title="New"
-       android:icon="@drawable/newtasks"
+      android:icon="@drawable/newtasks"
       app:showAsAction="ifRoom" />
   <item
       android:id="@+id/action_in_progress"

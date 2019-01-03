@@ -45,7 +45,6 @@ namespace TaskManager
         {
             TaskListView.ItemClick += TaskList_ItemClick;
             var floatingActionButton = FindViewById<FloatingActionButton>(Resource.Id.floating_add_button);
-            floatingActionButton.SetImageResource(Resource.Drawable.addnew);
             floatingActionButton.Click += FloatingActionButton_Click;
             var bottomNavigation = FindViewById<BottomNavigationView>(Resource.Id.bottom_navigation);
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
@@ -146,15 +145,20 @@ namespace TaskManager
                     {
                         case Crud.Update:
                             this.TaskService.UpdateTask(task);
-                            Task updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
+                            var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
+                            var updateTask = this.Tasks.FirstOrDefault(s => s.Id == task.Id);
+                            if (updateRawData.Status == task.Status)
+                                Mapper.Map(task, updateTask);
+                            else
+                                this.Tasks.Remove(Tasks.FirstOrDefault(t => t.Id == task.Id));
                             Mapper.Map(task, updateRawData);
-                            Task updateTask = this.Tasks.FirstOrDefault(s => s.Id == task.Id);
-                            Mapper.Map(task, updateTask);
                             break;
                         case Crud.Delete:
                             this.TaskService.DeleteTask(task);
-                            this.RawTasks.RemoveAll(s => s.Id == task.Id);
-                            this.Tasks.RemoveAll(s => s.Id == task.Id);
+                            this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
+                            var deleteTask = this.Tasks.FirstOrDefault(s => s.Id == task.Id);
+                            if (deleteTask != null)
+                                this.Tasks.Remove(Tasks.FirstOrDefault(t => t.Id == task.Id));
                             break;
                     }
                 }

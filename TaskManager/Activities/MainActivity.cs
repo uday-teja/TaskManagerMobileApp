@@ -14,6 +14,7 @@ using TaskManager.Activities;
 using TaskManager.Adaptors;
 using System;
 using Newtonsoft.Json;
+using AutoMapper;
 
 namespace TaskManager
 {
@@ -30,6 +31,7 @@ namespace TaskManager
         {
             base.OnCreate(savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
+            BootstrapAutoMapper.InitializeAutoMapper();
             TaskListView = FindViewById<ListView>(Resource.Id.mainlistview);
             var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
@@ -144,15 +146,15 @@ namespace TaskManager
                     {
                         case Crud.Update:
                             this.TaskService.UpdateTask(task);
-                            this.RawTasks.Remove(task);
-                            this.RawTasks.Add(task);
-                            this.Tasks.Remove(task);
-                            this.Tasks.Add(task);
+                            Task updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
+                            Mapper.Map(task, updateRawData);
+                            Task updateTask = this.Tasks.FirstOrDefault(s => s.Id == task.Id);
+                            Mapper.Map(task, updateTask);
                             break;
                         case Crud.Delete:
                             this.TaskService.DeleteTask(task);
                             this.RawTasks.RemoveAll(s => s.Id == task.Id);
-                            this.Tasks.RemoveAll(s=>s.Id == task.Id);
+                            this.Tasks.RemoveAll(s => s.Id == task.Id);
                             break;
                     }
                 }

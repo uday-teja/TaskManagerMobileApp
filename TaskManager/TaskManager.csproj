@@ -62,6 +62,7 @@
     <Compile Include="Activities\TaskDetails.cs" />
     <Compile Include="Adaptors\TaskListAdaptor.cs" />
     <Compile Include="Adaptors\TaskListFilter.cs" />
+    <Compile Include="BootstrapAutoMapper.cs" />
     <Compile Include="Model\Task.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -99,13 +100,16 @@
     <AndroidResource Include="Resources\mipmap-xxxhdpi\ic_launcher_round.png" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AutoMapper">
+      <Version>8.0.0</Version>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.1</Version>
     </PackageReference>
     <PackageReference Include="sqlite-net-pcl">
       <Version>1.5.231</Version>
     </PackageReference>
-    <PackageReference Include="Xamarin.Android.Support.Design" Version="27.0.2.1" />
+    <PackageReference Include="Xamarin.Android.Support.Design" Version="28.0.0" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\menu\bottom_navigation_main.axml">

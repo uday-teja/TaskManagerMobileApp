@@ -22,7 +22,7 @@ namespace TaskManager
     {
         public List<Task> RawTasks { get; set; }
         public List<Task> Tasks { get; set; }
-        public ListView TaskList { get; set; }
+        public ListView TaskListView { get; set; }
         private TaskService TaskService { get; set; }
         public Task Task { get; set; }
 
@@ -30,7 +30,7 @@ namespace TaskManager
         {
             base.OnCreate(savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
-            TaskList = FindViewById<ListView>(Resource.Id.mainlistview);
+            TaskListView = FindViewById<ListView>(Resource.Id.mainlistview);
             var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
             TaskService = new TaskService();
@@ -41,7 +41,7 @@ namespace TaskManager
 
         private void InitializeClickEvents()
         {
-            TaskList.ItemClick += TaskList_ItemClick;
+            TaskListView.ItemClick += TaskList_ItemClick;
             var floatingActionButton = FindViewById<FloatingActionButton>(Resource.Id.floating_add_button);
             floatingActionButton.SetImageResource(Resource.Drawable.addnew);
             floatingActionButton.Click += FloatingActionButton_Click;
@@ -49,7 +49,7 @@ namespace TaskManager
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
             var search = FindViewById<EditText>(Resource.Id.searchText);
             search.TextChanged += Search_TextChanged;
-            TaskList.LongClick += TaskList_LongClick;
+            TaskListView.LongClick += TaskList_LongClick;
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -68,7 +68,7 @@ namespace TaskManager
 
         private void Search_TextChanged(object sender, Android.Text.TextChangedEventArgs e)
         {
-            ((TaskListAdaptor)TaskList.Adapter).Filter.InvokeFilter(e.Text.ToString());
+            ((TaskListAdaptor)TaskListView.Adapter).Filter.InvokeFilter(e.Text.ToString());
         }
 
         private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
@@ -94,13 +94,13 @@ namespace TaskManager
             switch (id)
             {
                 case Resource.Id.action_new:
-                    TaskList.Adapter = GetTasks(Status.New);
+                    TaskListView.Adapter = GetTasks(Status.New);
                     break;
                 case Resource.Id.action_in_progress:
-                    TaskList.Adapter = GetTasks(Status.InProgress);
+                    TaskListView.Adapter = GetTasks(Status.InProgress);
                     break;
                 case Resource.Id.action_completed:
-                    TaskList.Adapter = GetTasks(Status.Completed);
+                    TaskListView.Adapter = GetTasks(Status.Completed);
                     break;
             }
         }
@@ -132,8 +132,9 @@ namespace TaskManager
                     var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("newtask"));
                     if (task != null)
                     {
-                        TaskService.AddTask(task);
-                        RawTasks.Add(TaskService.GetLast());
+                        this.TaskService.AddTask(task);
+                        this.RawTasks.Add(TaskService.GetLast());
+                        this.Tasks.Add(TaskService.GetLast());
                     }
                 }
                 else if (requestCode == 2)
@@ -142,18 +143,21 @@ namespace TaskManager
                     switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
                     {
                         case Crud.Update:
-                            TaskService.UpdateTask(task);
-                            RawTasks.Remove(task);
-                            RawTasks.Add(task);
+                            this.TaskService.UpdateTask(task);
+                            this.RawTasks.Remove(task);
+                            this.RawTasks.Add(task);
+                            this.Tasks.Remove(task);
+                            this.Tasks.Add(task);
                             break;
                         case Crud.Delete:
-                            TaskService.DeleteTask(task);
-                            RawTasks.Remove(task);
+                            this.TaskService.DeleteTask(task);
+                            this.RawTasks.RemoveAll(s => s.Id == task.Id);
+                            this.Tasks.RemoveAll(s=>s.Id == task.Id);
                             break;
                     }
                 }
             }
-            LoadSelectedTasks(Resource.Id.action_new);
+            (TaskListView.Adapter as TaskListAdaptor).NotifyDataSetChanged();
             base.OnActivityResult(requestCode, resultCode, data);
         }
     }

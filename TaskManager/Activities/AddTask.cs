@@ -86,8 +86,8 @@ namespace TaskManager.Activities
             task.Priority = (Priority)FindViewById<Spinner>(Resource.Id.priority).SelectedItemPosition;
             task.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
             var date = $"{FindViewById<EditText>(Resource.Id.due_date).Text} {FindViewById<EditText>(Resource.Id.due_time).Text}";
-            if (date != string.Empty || date != " ")
-                task.DueDate = Convert.ToDateTime(date);
+            //if (date != string.Empty || date != " ")
+            //    task.DueDate = Convert.ToDateTime(date);
             if (isUpdate)
             {
                 Intent updateTask = new Intent(this, typeof(AddTask));

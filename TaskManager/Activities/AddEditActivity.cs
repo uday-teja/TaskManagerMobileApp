@@ -16,35 +16,29 @@ using Java.Text;
 using Java.Util;
 using Newtonsoft.Json;
 using TaskManager.Model;
-using TaskManager.Service;
 using static Android.App.DatePickerDialog;
 using static Android.App.TimePickerDialog;
 
 namespace TaskManager.Activities
 {
-    [Activity(Label = "@string/add_task", Theme = "@style/AppTheme", MainLauncher = false)]
-    public class AddTask : AppCompatActivity, IOnDateSetListener, IOnTimeSetListener
+    [Activity(Label = "@string/add_task", ParentActivity = typeof(MainActivity), Theme = "@style/AppTheme", MainLauncher = false)]
+    public class AddEditActivity : AppCompatActivity, IOnDateSetListener, IOnTimeSetListener
     {
         private EditText dueDate;
         private EditText dueTime;
         private Calendar calendar;
-        private TaskService TaskService;
-        private Task task;
+        private Task currentTask;
         private bool isUpdate;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            SetContentView(Resource.Layout.add_task);
-            var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
-            SetSupportActionBar(toolbar);
-            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
-            SupportActionBar.SetHomeButtonEnabled(true);
+            SetContentView(Resource.Layout.add_task_view);
+            SetToolbar();
             SetStatusSpinner();
             SetDueDatePicker();
             SetPrioritySpinner();
-            TaskService = new TaskService();
-            task = new Task();
+            currentTask = new Task();
             calendar = Calendar.Instance;
             var selectedTask = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
             if (selectedTask != string.Empty)
@@ -54,21 +48,28 @@ namespace TaskManager.Activities
             }
         }
 
+        private void SetToolbar()
+        {
+            var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
+            SetSupportActionBar(toolbar);
+            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
+        }
+
         private void EditTask()
         {
-            task = JsonConvert.DeserializeObject<Task>(Intent.GetStringExtra("SelectedTask"));
-            FindViewById<TextView>(Resource.Id.name).Text = task.Name;
-            FindViewById<TextView>(Resource.Id.description).Text = task.Description;
-            FindViewById<Spinner>(Resource.Id.status).SetSelection((int)task.Status);
-            FindViewById<Spinner>(Resource.Id.priority).SetSelection((int)task.Priority);
-            FindViewById<TextView>(Resource.Id.due_date).Text = task.DueDate.ToShortDateString();
-            FindViewById<TextView>(Resource.Id.due_time).Text = task.DueDate.ToString("hh:mm tt").ToUpper();
-            SetTitle(Resource.String.update_task);
+            currentTask = JsonConvert.DeserializeObject<Task>(Intent.GetStringExtra("SelectedTask"));
+            FindViewById<TextView>(Resource.Id.name).Text = currentTask.Name;
+            FindViewById<TextView>(Resource.Id.description).Text = currentTask.Description;
+            FindViewById<Spinner>(Resource.Id.status).SetSelection((int)currentTask.Status);
+            FindViewById<Spinner>(Resource.Id.priority).SetSelection((int)currentTask.Priority);
+            FindViewById<TextView>(Resource.Id.due_date).Text = currentTask.DueDate.ToShortDateString();
+            FindViewById<TextView>(Resource.Id.due_time).Text = currentTask.DueDate.ToString("hh:mm tt").ToUpper();
+            this.SetTitle(Resource.String.update_task);
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
         {
-            MenuInflater.Inflate(Resource.Menu.item_actions, menu);
+            MenuInflater.Inflate(Resource.Menu.item_actions_menu, menu);
             return base.OnCreateOptionsMenu(menu);
         }
 
@@ -78,46 +79,33 @@ namespace TaskManager.Activities
             priority.Adapter = new ArrayAdapter<string>(this, Resource.Layout.support_simple_spinner_dropdown_item, Enum.GetValues(typeof(Priority)).Cast<Priority>().Select(e => e.ToString()).ToArray());
         }
 
-        private void AddTask_Click()
+        private void AddTaskClick()
         {
-            task.Name = FindViewById<EditText>(Resource.Id.name).Text;
-            task.Description = FindViewById<EditText>(Resource.Id.description).Text;
-            task.Priority = (Priority)FindViewById<Spinner>(Resource.Id.priority).SelectedItemPosition;
-            task.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
+            currentTask.Name = FindViewById<EditText>(Resource.Id.name).Text;
+            currentTask.Description = FindViewById<EditText>(Resource.Id.description).Text;
+            currentTask.Priority = (Priority)FindViewById<Spinner>(Resource.Id.priority).SelectedItemPosition;
+            currentTask.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
             var date = $"{FindViewById<EditText>(Resource.Id.due_date).Text} {FindViewById<EditText>(Resource.Id.due_time).Text}";
-            if (date != " ")
-                task.DueDate = Convert.ToDateTime(date);
+            currentTask.DueDate = date != " " ? currentTask.DueDate = Convert.ToDateTime(date) : DateTime.Now.AddDays(1);
+            SendTask();
+        }
+
+        private void SendTask()
+        {
             if (isUpdate)
             {
-                Intent updateTask = new Intent(this, typeof(AddTask));
+                Intent updateTask = new Intent(this, typeof(AddEditActivity));
                 updateTask.PutExtra("type", JsonConvert.SerializeObject(Crud.Update));
-                updateTask.PutExtra("task", JsonConvert.SerializeObject(this.task));
+                updateTask.PutExtra("task", JsonConvert.SerializeObject(this.currentTask));
                 SetResult(Result.Ok, updateTask);
-                Finish();
             }
             else
             {
                 Intent newTask = new Intent(this, typeof(MainActivity));
-                newTask.PutExtra("newtask", JsonConvert.SerializeObject(this.task));
+                newTask.PutExtra("newtask", JsonConvert.SerializeObject(this.currentTask));
                 SetResult(Result.Ok, newTask);
-                Finish();
             }
-        }
-
-        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
-        {
-            base.OnActivityResult(requestCode, resultCode, data);
-            if (resultCode != Result.Canceled)
-            {
-                if (requestCode == 1)
-                {
-                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("editTask"));
-                    if (task != null)
-                    {
-                        this.task = task;
-                    }
-                }
-            }
+            Finish();
         }
 
         private void SetDueDatePicker()
@@ -125,16 +113,16 @@ namespace TaskManager.Activities
             dueDate = FindViewById<EditText>(Resource.Id.due_date);
             dueDate.Click += DueDate_Click;
             dueTime = FindViewById<EditText>(Resource.Id.due_time);
-            dueTime.Click += DueTime_Click;
+            dueTime.Click += DueTimeClick;
         }
 
-        private void DueTime_Click(object sender, EventArgs e)
+        private void DueTimeClick(object sender, EventArgs e)
         {
             int hour = 7, minutes = 0;
             if (this.isUpdate)
             {
-                hour = this.task.DueDate.Hour;
-                minutes = this.task.DueDate.Minute;
+                hour = this.currentTask.DueDate.Hour;
+                minutes = this.currentTask.DueDate.Minute;
             }
             var timePickerDialog = new TimePickerDialog(this, this, hour, minutes, false);
             timePickerDialog.Show();
@@ -145,9 +133,9 @@ namespace TaskManager.Activities
             int year, month, day;
             if (this.isUpdate)
             {
-                year = this.task.DueDate.Year;
-                month = this.task.DueDate.Month;
-                day = this.task.DueDate.Day;
+                year = this.currentTask.DueDate.Year;
+                month = this.currentTask.DueDate.Month;
+                day = this.currentTask.DueDate.Day;
             }
             else
             {
@@ -169,11 +157,8 @@ namespace TaskManager.Activities
         {
             switch (item.ItemId)
             {
-                case Android.Resource.Id.Home:
-                    this.OnBackPressed();
-                    break;
                 case Resource.Id.action_new:
-                    this.AddTask_Click();
+                    this.AddTaskClick();
                     break;
             }
             return base.OnOptionsItemSelected(item);

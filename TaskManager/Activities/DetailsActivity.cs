@@ -11,19 +11,23 @@ using Android.Views;
 using Android.Widget;
 using Newtonsoft.Json;
 using TaskManager.Model;
+using TaskManager.Service;
 
 namespace TaskManager.Activities
 {
-    [Activity(Label = "Task Details", Theme = "@style/AppTheme", MainLauncher = false)]
-    public class TaskDetails : AppCompatActivity
+    [Activity(Label = "Task Details", ParentActivity = typeof(MainActivity), Theme = "@style/AppTheme", MainLauncher = false)]
+    public class DetailsActivity : AppCompatActivity
     {
-        public Task SelectedTask { get; set; }
+        private Task SelectedTask { get; set; }
+        private TaskService TaskService { get; set; }
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            SetContentView(Resource.Layout.task_details);
+            SetContentView(Resource.Layout.task_details_view);
             var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
+            TaskService = new TaskService();
             SupportActionBar.SetDisplayHomeAsUpEnabled(true);
             SelectedTask = JsonConvert.DeserializeObject<Task>(Intent.GetStringExtra("taskDetails"));
             FindViewById<TextView>(Resource.Id.taskdetailname).Text = SelectedTask.Name;
@@ -38,9 +42,6 @@ namespace TaskManager.Activities
         {
             switch (item.ItemId)
             {
-                case Android.Resource.Id.Home:
-                    this.OnBackPressed();
-                    break;
                 case Resource.Id.edit:
                     EditTask();
                     break;
@@ -53,7 +54,8 @@ namespace TaskManager.Activities
 
         private void EditTask()
         {
-            Intent addTask = new Intent(this, typeof(AddTask));
+            this.TaskService.UpdateTask(this.SelectedTask);
+            Intent addTask = new Intent(this, typeof(AddEditActivity));
             addTask.PutExtra("SelectedTask", JsonConvert.SerializeObject(this.SelectedTask));
             this.StartActivityForResult(addTask, 1);
         }
@@ -69,6 +71,7 @@ namespace TaskManager.Activities
         {
             if (this.SelectedTask != null)
             {
+                this.TaskService.DeleteTask(this.SelectedTask);
                 Intent deleteTask = new Intent(this, typeof(MainActivity));
                 deleteTask.PutExtra("type", JsonConvert.SerializeObject(Crud.Delete));
                 deleteTask.PutExtra("task", JsonConvert.SerializeObject(SelectedTask));

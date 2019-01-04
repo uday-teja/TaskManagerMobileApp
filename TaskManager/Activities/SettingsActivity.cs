@@ -13,12 +13,12 @@ using Android.Support.V7.Widget;
 namespace TaskManager.Activities
 {
     [Activity(Label = "Settings", Theme = "@style/AppTheme", MainLauncher = false)]
-    public class Settings : AppCompatActivity
+    public class SettingsActivity : AppCompatActivity
     {
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            SetContentView(Resource.Layout.settings);
+            SetContentView(Resource.Layout.settings_view);
             var toolbar = FindViewById<Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
             SupportActionBar.SetDisplayHomeAsUpEnabled(true);

@@ -56,6 +56,7 @@ namespace TaskManager.Activities
         {
             this.TaskService.UpdateTask(this.SelectedTask);
             Intent addTask = new Intent(this, typeof(AddEditActivity));
+            addTask.PutExtra("type", JsonConvert.SerializeObject(Crud.Add));
             addTask.PutExtra("SelectedTask", JsonConvert.SerializeObject(this.SelectedTask));
             this.StartActivityForResult(addTask, 1);
         }

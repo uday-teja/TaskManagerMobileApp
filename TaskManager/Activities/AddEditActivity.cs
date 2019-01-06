@@ -40,7 +40,7 @@ namespace TaskManager.Activities
             SetPrioritySpinner();
             currentTask = new Task();
             calendar = Calendar.Instance;
-            var selectedTask = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
+            var selectedTask = Intent.GetStringExtra("type") ?? null;
             if (selectedTask != string.Empty)
             {
                 isUpdate = true;

@@ -24,7 +24,6 @@ namespace TaskManager
     public class MainActivity : AppCompatActivity
     {
         public List<Task> RawTasks { get; set; }
-        public List<Task> Tasks { get; set; }
         public Task Task { get; set; }
         public ListView TaskListView { get; set; }
         private TaskService TaskService { get; set; }
@@ -41,8 +40,7 @@ namespace TaskManager
             this.TaskListView = FindViewById<ListView>(Resource.Id.mainlistview);
             SetToolbar();
             InitializeClickEvents();
-            this.Tasks = this.RawTasks.Where(s => s.Status == Status.New).ToList();
-            TaskListAdaptor = new TaskListAdaptor(this, this.Tasks);
+            TaskListAdaptor = new TaskListAdaptor(this, this.RawTasks.Where(s => s.Status == Status.New).ToList());
             TaskListView.Adapter = TaskListAdaptor;
         }
 
@@ -59,8 +57,8 @@ namespace TaskManager
             floatingActionButton.Click += FloatingActionButton_Click;
             var bottomNavigation = FindViewById<BottomNavigationView>(Resource.Id.bottom_navigation);
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
-            var search = FindViewById<SearchView>(Resource.Id.searchView1);
-            search.QueryTextChange += SearchQueryTextChange;
+            SearchView = FindViewById<SearchView>(Resource.Id.searchView1);
+            SearchView.QueryTextChange += SearchQueryTextChange;
         }
 
         private void SearchQueryTextChange(object sender, SearchView.QueryTextChangeEventArgs e)
@@ -77,7 +75,7 @@ namespace TaskManager
         private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
             var taskDetails = new Intent(this, typeof(DetailsActivity));
-            taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.Tasks[e.Position]));
+            taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.TaskListAdaptor.Tasks[e.Position]));
             this.StartActivityForResult(taskDetails, 2);
         }
 
@@ -90,25 +88,26 @@ namespace TaskManager
         private void BottomNavigation_NavigationItemSelected(object sender, BottomNavigationView.NavigationItemSelectedEventArgs e)
         {
             LoadSelectedTasks(e.Item.ItemId);
+            SearchView.SetQuery("", false);
             this.TaskListAdaptor.NotifyDataSetChanged();
         }
 
         private void LoadSelectedTasks(int id)
         {
-            this.Tasks.Clear();
+            this.TaskListAdaptor.Tasks.Clear();
             switch (id)
             {
                 case Resource.Id.action_new:
                     currentStatus = Status.New;
-                    this.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.New));
+                    this.TaskListAdaptor.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.New));
                     break;
                 case Resource.Id.action_in_progress:
                     currentStatus = Status.InProgress;
-                    this.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.InProgress));
+                    this.TaskListAdaptor.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.InProgress));
                     break;
                 case Resource.Id.action_completed:
                     currentStatus = Status.Completed;
-                    this.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.Completed));
+                    this.TaskListAdaptor.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.Completed));
                     break;
             }
         }
@@ -136,8 +135,8 @@ namespace TaskManager
                     {
                         this.TaskService.AddTask(task);
                         this.RawTasks.Add(TaskService.GetLast());
-                        if (currentStatus == task.Status)
-                            this.Tasks.Add(TaskService.GetLast());
+                        if (task.Status == currentStatus)
+                            this.TaskListAdaptor.Tasks.Add(TaskService.GetLast());
                     }
                 }
                 else if (requestCode == 2)
@@ -146,8 +145,9 @@ namespace TaskManager
                     switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
                     {
                         case Crud.Update:
+                            this.TaskService.UpdateTask(task);
                             var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
-                            var updateTask = this.Tasks.FirstOrDefault(s => s.Id == task.Id);
+                            var updateTask = this.TaskListAdaptor.Tasks.FirstOrDefault(s => s.Id == task.Id);
                             if (updateRawData.Status == task.Status)
                             {
                                 updateTask.Name = task.Name;
@@ -157,7 +157,7 @@ namespace TaskManager
                                 updateTask.Priority = task.Priority;
                             }
                             else
-                                this.Tasks.Remove(Tasks.FirstOrDefault(t => t.Id == task.Id));
+                                this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
                             updateRawData.Name = task.Name;
                             updateRawData.Description = task.Description;
                             updateRawData.DueDate = task.DueDate;
@@ -165,8 +165,9 @@ namespace TaskManager
                             updateRawData.Priority = task.Priority;
                             break;
                         case Crud.Delete:
+                            this.TaskService.DeleteTask(task);
                             this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
-                            this.Tasks.Remove(Tasks.FirstOrDefault(t => t.Id == task.Id));
+                            this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
                             break;
                     }
                 }

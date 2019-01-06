@@ -6,21 +6,20 @@ using Android.Views;
 using Android.Widget;
 using Java.Lang;
 using TaskManager.Model;
-using Object = Java.Lang.Object;
 
 namespace TaskManager.Adaptors
 {
     public class TaskListAdaptor : BaseAdapter<Task>, IFilterable
     {
         private readonly Activity activity;
-        public List<Task> tasks { get; set; }
+        public List<Task> Tasks { get; set; }
         private List<Task> allTasks { get; set; }
         public Filter Filter { get; set; }
 
         public TaskListAdaptor(Activity activity, List<Task> tasks)
         {
             this.activity = activity;
-            this.allTasks = this.tasks = tasks;
+            this.allTasks = this.Tasks = tasks;
             this.Filter = new TaskFilter(this);
         }
 
@@ -28,7 +27,7 @@ namespace TaskManager.Adaptors
         {
             get
             {
-                return tasks[position];
+                return Tasks[position];
             }
         }
 
@@ -36,7 +35,7 @@ namespace TaskManager.Adaptors
         {
             get
             {
-                return tasks.Count;
+                return Tasks.Count;
             }
         }
 
@@ -49,7 +48,7 @@ namespace TaskManager.Adaptors
         public override View GetView(int position, View convertView, ViewGroup parent)
         {
             var view = convertView ?? activity.LayoutInflater.Inflate(Resource.Layout.task_row_view, null);
-            var task = tasks[position];
+            var task = Tasks[position];
             var name = view.FindViewById<TextView>(Resource.Id.taskName);
             var description = view.FindViewById<TextView>(Resource.Id.taskDescription);
             var priorityColor = view.FindViewById<LinearLayout>(Resource.Id.task_row_status);
@@ -85,12 +84,12 @@ namespace TaskManager.Adaptors
                 var results = new FilterResults();
                 if (!string.IsNullOrEmpty(constraint.ToString()))
                 {
-                    this.taskListAdaptor.tasks = this.taskListAdaptor.allTasks.Where(s => s.Name.Contains(constraint.ToString())).ToList();
-                    results.Count = this.taskListAdaptor.tasks.Count();
+                    this.taskListAdaptor.Tasks = this.taskListAdaptor.allTasks.Where(s => s.Name.Contains(constraint.ToString())).ToList();
+                    results.Count = this.taskListAdaptor.Tasks.Count();
                 }
                 else
                 {
-                    this.taskListAdaptor.tasks = this.taskListAdaptor.allTasks;
+                    this.taskListAdaptor.Tasks = this.taskListAdaptor.allTasks;
                 }
                 return results;
             }

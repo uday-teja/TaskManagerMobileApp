@@ -12,17 +12,21 @@
         android:id="@+id/toolbar"
         layout="@layout/toolbar"/>
 
-	<EditText
-		android:id="@+id/searchText"
+	<SearchView
+		android:id="@+id/searchView1"
 		android:layout_below="@id/toolbar"
-		android:layout_margin="10dp"
-		android:hint="Search"
+		android:iconifiedByDefault="false"
+		android:queryBackground="@android:color/white"
 		android:layout_height="wrap_content" 
 		android:layout_width="match_parent"
+		android:minHeight="25dp"
+		android:minWidth="25dp"
+		android:padding="5dp"
+		android:layout_marginLeft="-15dp"
 	/>
 
     <ListView android:id="@+id/mainlistview"
-		android:layout_below="@id/searchText"
+		android:layout_below="@id/searchView1"
 		android:paddingBottom="120dp"
 		android:clipToPadding="false"
 		android:layout_height="wrap_content" 

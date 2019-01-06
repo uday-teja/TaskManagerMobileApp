@@ -12,16 +12,16 @@ namespace TaskManager.Adaptors
 {
     public class TaskListAdaptor : BaseAdapter<Task>, IFilterable
     {
-        public List<Task> rawTasks;
-        public List<Task> tasks;
         private readonly Activity activity;
-        public Filter Filter { get; private set; }
+        public List<Task> tasks { get; set; }
+        private List<Task> allTasks { get; set; }
+        public Filter Filter { get; set; }
 
         public TaskListAdaptor(Activity activity, List<Task> tasks)
         {
             this.activity = activity;
-            this.tasks = tasks;
-            Filter = new TaskListFilter(this);
+            this.allTasks = this.tasks = tasks;
+            this.Filter = new TaskFilter(this);
         }
 
         public override Task this[int position]
@@ -39,6 +39,7 @@ namespace TaskManager.Adaptors
                 return tasks.Count;
             }
         }
+
 
         public override long GetItemId(int position)
         {
@@ -67,6 +68,37 @@ namespace TaskManager.Adaptors
             name.Text = task.Name;
             description.Text = task.Description;
             return view;
+
+        }
+
+        public class TaskFilter : Filter
+        {
+            readonly TaskListAdaptor taskListAdaptor;
+
+            public TaskFilter(TaskListAdaptor taskListAdaptor)
+            {
+                this.taskListAdaptor = taskListAdaptor;
+            }
+
+            protected override FilterResults PerformFiltering(ICharSequence constraint)
+            {
+                var results = new FilterResults();
+                if (!string.IsNullOrEmpty(constraint.ToString()))
+                {
+                    this.taskListAdaptor.tasks = this.taskListAdaptor.allTasks.Where(s => s.Name.Contains(constraint.ToString())).ToList();
+                    results.Count = this.taskListAdaptor.tasks.Count();
+                }
+                else
+                {
+                    this.taskListAdaptor.tasks = this.taskListAdaptor.allTasks;
+                }
+                return results;
+            }
+
+            protected override void PublishResults(ICharSequence constraint, FilterResults results)
+            {
+                this.taskListAdaptor.NotifyDataSetChanged();
+            }
         }
     }
 

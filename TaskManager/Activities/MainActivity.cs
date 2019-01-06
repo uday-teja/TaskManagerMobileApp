@@ -25,87 +25,31 @@ namespace TaskManager
     {
         public List<Task> RawTasks { get; set; }
         public List<Task> Tasks { get; set; }
+        public Task Task { get; set; }
         public ListView TaskListView { get; set; }
         private TaskService TaskService { get; set; }
-        public Task Task { get; set; }
-
-        // Unique ID for our notification: 
-        static readonly int NOTIFICATION_ID = 1000;
-        static readonly string CHANNEL_ID = "location_notification";
-        internal static readonly string COUNT_KEY = "count";
-
-        int count = 1;
+        private TaskListAdaptor TaskListAdaptor { get; set; }
+        private Status currentStatus { get; set; }
+        private SearchView SearchView { get; set; }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
-            TaskListView = FindViewById<ListView>(Resource.Id.mainlistview);
+            this.TaskService = new TaskService();
+            this.RawTasks = TaskService.GetAll();
+            this.TaskListView = FindViewById<ListView>(Resource.Id.mainlistview);
+            SetToolbar();
+            InitializeClickEvents();
+            this.Tasks = this.RawTasks.Where(s => s.Status == Status.New).ToList();
+            TaskListAdaptor = new TaskListAdaptor(this, this.Tasks);
+            TaskListView.Adapter = TaskListAdaptor;
+        }
+
+        private void SetToolbar()
+        {
             var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
-            TaskService = new TaskService();
-            RawTasks = TaskService.GetAll();
-            InitializeClickEvents();
-            LoadSelectedTasks(Resource.Id.action_new);
-            CreateNotificationChannel();
-        }
-
-        public void CreateNotificationChannel()
-        {
-            if (Build.VERSION.SdkInt < BuildVersionCodes.O)
-            {
-                // Notification channels are new in API 26 (and not a part of the
-                // support library). There is no need to create a notification
-                // channel on older versions of Android.
-                return;
-            }
-
-            var name = "This is Name";
-            var description = "This is Description";
-            var channel = new NotificationChannel(CHANNEL_ID, name, NotificationImportance.Default)
-            {
-                Description = description
-            };
-
-            var notificationManager = (NotificationManager)GetSystemService(NotificationService);
-            notificationManager.CreateNotificationChannel(channel);
-        }
-
-        public void GenerateNotification()
-        {
-            // Pass the current button press count value to the next activity:
-            var valuesForActivity = new Bundle();
-            valuesForActivity.PutInt(COUNT_KEY, count);
-
-            // When the user clicks the notification, SecondActivity will start up.
-            var resultIntent = new Intent(this, typeof(NotificationActivity));
-
-            // Pass some values to SecondActivity:
-            resultIntent.PutExtras(valuesForActivity);
-
-            // Construct a back stack for cross-task navigation:
-            var stackBuilder = TaskStackBuilder.Create(this);
-            stackBuilder.AddParentStack(Java.Lang.Class.FromType(typeof(NotificationActivity)));
-            stackBuilder.AddNextIntent(resultIntent);
-
-            // Create the PendingIntent with the back stack:
-            var resultPendingIntent = stackBuilder.GetPendingIntent(0, (int)PendingIntentFlags.UpdateCurrent);
-
-            // Build the notification:
-            var builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                          .SetAutoCancel(true) // Dismiss the notification from the notification area when the user clicks on it
-                          .SetContentIntent(resultPendingIntent) // Start up this activity when the user clicks the intent.
-                          .SetContentTitle("Button Clicked") // Set the title
-                          .SetNumber(count) // Display the count in the Content Info
-                          .SetSmallIcon(Resource.Drawable.logo) // This is the icon to display
-                          .SetContentText($"The button has been clicked {count} times."); // the message to display.
-
-            // Finally, publish the notification:
-            var notificationManager = NotificationManagerCompat.From(this);
-            notificationManager.Notify(NOTIFICATION_ID, builder.Build());
-
-            // Increment the button press count:
-            count++;
         }
 
         private void InitializeClickEvents()
@@ -115,9 +59,13 @@ namespace TaskManager
             floatingActionButton.Click += FloatingActionButton_Click;
             var bottomNavigation = FindViewById<BottomNavigationView>(Resource.Id.bottom_navigation);
             bottomNavigation.NavigationItemSelected += BottomNavigation_NavigationItemSelected;
-            var search = FindViewById<EditText>(Resource.Id.searchText);
-            search.TextChanged += Search_TextChanged;
-            //TaskListView.LongClick += TaskList_LongClick;
+            var search = FindViewById<SearchView>(Resource.Id.searchView1);
+            search.QueryTextChange += SearchQueryTextChange;
+        }
+
+        private void SearchQueryTextChange(object sender, SearchView.QueryTextChangeEventArgs e)
+        {
+            TaskListAdaptor.Filter.InvokeFilter(e.NewText);
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -126,23 +74,10 @@ namespace TaskManager
             return base.OnCreateOptionsMenu(menu);
         }
 
-        private void TaskList_LongClick(object sender, View.LongClickEventArgs e)
-        {
-            var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
-            SetSupportActionBar(toolbar);
-            SupportActionBar.SetDisplayHomeAsUpEnabled(true);
-            SupportActionBar.SetHomeButtonEnabled(true);
-        }
-
-        private void Search_TextChanged(object sender, Android.Text.TextChangedEventArgs e)
-        {
-            ((TaskListAdaptor)TaskListView.Adapter).Filter.InvokeFilter(e.Text.ToString());
-        }
-
         private void TaskList_ItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
             var taskDetails = new Intent(this, typeof(DetailsActivity));
-            taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.Tasks.ElementAt((int)e.Id)));
+            taskDetails.PutExtra("taskDetails", JsonConvert.SerializeObject(this.Tasks[e.Position]));
             this.StartActivityForResult(taskDetails, 2);
         }
 
@@ -155,29 +90,27 @@ namespace TaskManager
         private void BottomNavigation_NavigationItemSelected(object sender, BottomNavigationView.NavigationItemSelectedEventArgs e)
         {
             LoadSelectedTasks(e.Item.ItemId);
-            FindViewById<EditText>(Resource.Id.searchText).Text = string.Empty;
+            this.TaskListAdaptor.NotifyDataSetChanged();
         }
 
         private void LoadSelectedTasks(int id)
         {
+            this.Tasks.Clear();
             switch (id)
             {
                 case Resource.Id.action_new:
-                    TaskListView.Adapter = GetTasks(Status.New);
+                    currentStatus = Status.New;
+                    this.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.New));
                     break;
                 case Resource.Id.action_in_progress:
-                    TaskListView.Adapter = GetTasks(Status.InProgress);
+                    currentStatus = Status.InProgress;
+                    this.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.InProgress));
                     break;
                 case Resource.Id.action_completed:
-                    TaskListView.Adapter = GetTasks(Status.Completed);
+                    currentStatus = Status.Completed;
+                    this.Tasks.AddRange(this.RawTasks.Where(s => s.Status == Status.Completed));
                     break;
             }
-        }
-
-        private TaskListAdaptor GetTasks(Status status)
-        {
-            this.Tasks = RawTasks.Where(t => t.Status == status).ToList();
-            return new TaskListAdaptor(this, this.Tasks);
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)
@@ -203,7 +136,8 @@ namespace TaskManager
                     {
                         this.TaskService.AddTask(task);
                         this.RawTasks.Add(TaskService.GetLast());
-                        this.Tasks.Add(TaskService.GetLast());
+                        if (currentStatus == task.Status)
+                            this.Tasks.Add(TaskService.GetLast());
                     }
                 }
                 else if (requestCode == 2)
@@ -215,21 +149,29 @@ namespace TaskManager
                             var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
                             var updateTask = this.Tasks.FirstOrDefault(s => s.Id == task.Id);
                             if (updateRawData.Status == task.Status)
-                                Mapper.Map(task, updateTask);
+                            {
+                                updateTask.Name = task.Name;
+                                updateTask.Description = task.Description;
+                                updateTask.DueDate = task.DueDate;
+                                updateTask.Status = task.Status;
+                                updateTask.Priority = task.Priority;
+                            }
                             else
                                 this.Tasks.Remove(Tasks.FirstOrDefault(t => t.Id == task.Id));
-                            Mapper.Map(task, updateRawData);
+                            updateRawData.Name = task.Name;
+                            updateRawData.Description = task.Description;
+                            updateRawData.DueDate = task.DueDate;
+                            updateRawData.Status = task.Status;
+                            updateRawData.Priority = task.Priority;
                             break;
                         case Crud.Delete:
                             this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
-                            var deleteTask = this.Tasks.FirstOrDefault(s => s.Id == task.Id);
-                            if (deleteTask != null)
-                                this.Tasks.Remove(Tasks.FirstOrDefault(t => t.Id == task.Id));
+                            this.Tasks.Remove(Tasks.FirstOrDefault(t => t.Id == task.Id));
                             break;
                     }
                 }
             }
-            (TaskListView.Adapter as TaskListAdaptor).NotifyDataSetChanged();
+            this.TaskListAdaptor.NotifyDataSetChanged();
             base.OnActivityResult(requestCode, resultCode, data);
         }
     }

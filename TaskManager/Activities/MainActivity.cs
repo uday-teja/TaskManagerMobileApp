@@ -17,6 +17,7 @@ using Newtonsoft.Json;
 using AutoMapper;
 using Android.Support.V4.App;
 using TaskStackBuilder = Android.Support.V4.App.TaskStackBuilder;
+using Java.Util;
 
 namespace TaskManager
 {
@@ -30,6 +31,9 @@ namespace TaskManager
         private TaskListAdaptor TaskListAdaptor { get; set; }
         private Status currentStatus { get; set; }
         private SearchView SearchView { get; set; }
+        private AlarmManager AlarmManager { get; set; }
+        private Intent alarmIntent { get; set; }
+        private bool notificationsEnabled { get; set; }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -42,6 +46,33 @@ namespace TaskManager
             InitializeClickEvents();
             TaskListAdaptor = new TaskListAdaptor(this, this.RawTasks.Where(s => s.Status == Status.New).ToList());
             TaskListView.Adapter = TaskListAdaptor;
+        }
+
+        public void StartNotification()
+        {
+            var tasks = RawTasks.Where(t => t.Status == Status.New || t.Status == Status.InProgress);
+            alarmIntent = new Intent(this, typeof(AlarmReceiver));
+            foreach (var task in tasks)
+            {
+                alarmIntent.PutExtra("title", task.Name);
+                alarmIntent.PutExtra("message", SetNotificationMessage(task.DueDate));
+            }
+            var pending = PendingIntent.GetBroadcast(this, 0, alarmIntent, PendingIntentFlags.UpdateCurrent);
+            AlarmManager = GetSystemService(AlarmService).JavaCast<AlarmManager>();
+            AlarmManager.SetRepeating(AlarmType.RtcWakeup, Calendar.Instance.TimeInMillis, 2 * 60 * 1000, pending);
+        }
+
+        private string SetNotificationMessage(DateTime dueDate)
+        {
+            if (dueDate.Date.Date < DateTime.Now.Date)
+                return $"Overdue by - {dueDate.ToString("dddd, dd MMMM yyyy")}";
+            else if (dueDate.Date.Date.ToShortDateString() == DateTime.Now.Date.ToShortDateString())
+                return $"Due today @{dueDate.ToString("hh:mm tt")}";
+            else if (dueDate.Date.Date < DateTime.Now.AddDays(2).Date)
+                return $"Due tomorrow @{dueDate.ToString("hh:mm tt")}";
+            else if (dueDate.Date.Date < DateTime.Now.AddDays(3).Date)
+                return $"Completed by {dueDate.ToString("dddd, hh:mm tt")}";
+            return string.Empty;
         }
 
         private void SetToolbar()
@@ -118,7 +149,8 @@ namespace TaskManager
             {
                 case Resource.Id.Settings:
                     var settings = new Intent(this, typeof(SettingsActivity));
-                    StartActivity(settings);
+                    settings.PutExtra("notificationsEnabled", notificationsEnabled.ToString());
+                    this.StartActivityForResult(settings, 3);
                     break;
             }
             return base.OnOptionsItemSelected(item);
@@ -128,52 +160,70 @@ namespace TaskManager
         {
             if (resultCode != Result.Canceled)
             {
-                if (requestCode == 1)
+                switch (requestCode)
                 {
-                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("newtask"));
-                    if (task != null)
-                    {
-                        this.TaskService.AddTask(task);
-                        this.RawTasks.Add(TaskService.GetLast());
-                        if (task.Status == currentStatus)
-                            this.TaskListAdaptor.Tasks.Add(TaskService.GetLast());
-                    }
-                }
-                else if (requestCode == 2)
-                {
-                    var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("task"));
-                    switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
-                    {
-                        case Crud.Update:
-                            this.TaskService.UpdateTask(task);
-                            var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
-                            var updateTask = this.TaskListAdaptor.Tasks.FirstOrDefault(s => s.Id == task.Id);
-                            if (updateRawData.Status == task.Status)
-                            {
-                                updateTask.Name = task.Name;
-                                updateTask.Description = task.Description;
-                                updateTask.DueDate = task.DueDate;
-                                updateTask.Status = task.Status;
-                                updateTask.Priority = task.Priority;
-                            }
-                            else
+                    case 1:
+                        var newTask = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("newtask"));
+                        if (newTask != null)
+                        {
+                            this.TaskService.AddTask(newTask);
+                            this.RawTasks.Add(TaskService.GetLast());
+                            if (newTask.Status == currentStatus)
+                                this.TaskListAdaptor.Tasks.Add(TaskService.GetLast());
+                        }
+                        break;
+                    case 2:
+                        var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("task"));
+                        switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
+                        {
+                            case Crud.Update:
+                                this.TaskService.UpdateTask(task);
+                                var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
+                                var updateTask = this.TaskListAdaptor.Tasks.FirstOrDefault(s => s.Id == task.Id);
+                                if (updateRawData.Status == task.Status)
+                                {
+                                    updateTask.Name = task.Name;
+                                    updateTask.Description = task.Description;
+                                    updateTask.DueDate = task.DueDate;
+                                    updateTask.Status = task.Status;
+                                    updateTask.Priority = task.Priority;
+                                }
+                                else
+                                    this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
+                                updateRawData.Name = task.Name;
+                                updateRawData.Description = task.Description;
+                                updateRawData.DueDate = task.DueDate;
+                                updateRawData.Status = task.Status;
+                                updateRawData.Priority = task.Priority;
+                                break;
+                            case Crud.Delete:
+                                this.TaskService.DeleteTask(task);
+                                this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
                                 this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
-                            updateRawData.Name = task.Name;
-                            updateRawData.Description = task.Description;
-                            updateRawData.DueDate = task.DueDate;
-                            updateRawData.Status = task.Status;
-                            updateRawData.Priority = task.Priority;
-                            break;
-                        case Crud.Delete:
-                            this.TaskService.DeleteTask(task);
-                            this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
-                            this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
-                            break;
-                    }
+                                break;
+                        }
+                        break;
+
                 }
             }
+            if (requestCode == 3)
+            {
+                notificationsEnabled = data.GetStringExtra("notificationsEnabled") == "true";
+                if (notificationsEnabled)
+                    StartNotification();
+            }
+            StartNotification();
             this.TaskListAdaptor.NotifyDataSetChanged();
             base.OnActivityResult(requestCode, resultCode, data);
+        }
+
+        private void UpdateTaskData(Task source, Task destination)
+        {
+            destination.Name = source.Name;
+            destination.Description = source.Description;
+            destination.DueDate = source.DueDate;
+            destination.Status = source.Status;
+            destination.Priority = source.Priority;
         }
     }
 }

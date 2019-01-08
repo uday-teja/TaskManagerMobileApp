@@ -33,7 +33,7 @@ namespace TaskManager
         private SearchView SearchView { get; set; }
         private AlarmManager AlarmManager { get; set; }
         private Intent alarmIntent { get; set; }
-        private bool notificationsEnabled { get; set; }
+        private bool isNotificationsEnabled { get; set; }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -46,20 +46,49 @@ namespace TaskManager
             InitializeClickEvents();
             TaskListAdaptor = new TaskListAdaptor(this, this.RawTasks.Where(s => s.Status == Status.New).ToList());
             TaskListView.Adapter = TaskListAdaptor;
+            CreateNotificationChannel();
+            StartAlarm();
         }
 
-        public void StartNotification()
+        //public void StartNotification()
+        //{
+        //    var tasks = RawTasks.Where(t => t.Status == Status.New || t.Status == Status.InProgress);
+        //    alarmIntent = new Intent(this, typeof(AlarmReceiver));
+        //    foreach (var task in tasks)
+        //    {
+        //        Remind(task.Name, SetNotificationMessage(task.DueDate));
+        //    }
+        //}
+
+        void CreateNotificationChannel()
         {
-            var tasks = RawTasks.Where(t => t.Status == Status.New || t.Status == Status.InProgress);
-            alarmIntent = new Intent(this, typeof(AlarmReceiver));
-            foreach (var task in tasks)
+            var channel = new NotificationChannel("Channel", "name", NotificationImportance.Default)
             {
-                alarmIntent.PutExtra("title", task.Name);
-                alarmIntent.PutExtra("message", SetNotificationMessage(task.DueDate));
-            }
-            var pending = PendingIntent.GetBroadcast(this, 0, alarmIntent, PendingIntentFlags.UpdateCurrent);
-            AlarmManager = GetSystemService(AlarmService).JavaCast<AlarmManager>();
-            AlarmManager.SetRepeating(AlarmType.RtcWakeup, Calendar.Instance.TimeInMillis, 2 * 60 * 1000, pending);
+                Description = "demo"
+            };
+
+            var notificationManager = (NotificationManager)GetSystemService(NotificationService);
+            notificationManager.CreateNotificationChannel(channel);
+        }
+
+        public void StartAlarm()
+        {
+            AlarmManager alarmManager = (AlarmManager)GetSystemService(Context.AlarmService);
+            Intent myIntent;
+            PendingIntent pendingIntent;
+            myIntent = new Intent(this, typeof(AlarmReceiver));
+            pendingIntent = PendingIntent.GetBroadcast(this, 0, myIntent, 0);
+            alarmManager.SetRepeating(AlarmType.RtcWakeup, SystemClock.ElapsedRealtime() + 3000, 60 * 1000, pendingIntent);
+
+            var builder = new NotificationCompat.Builder(this)
+                .SetDefaults((int)NotificationDefaults.All)
+                         .SetSmallIcon(Resource.Drawable.logo)
+                         .SetVisibility((int)NotificationVisibility.Public)
+                         .SetContentTitle("A")
+                         .SetContentText("b");
+
+            var notificationManager = NotificationManagerCompat.From(this);
+            notificationManager.Notify(1, builder.Build());
         }
 
         private string SetNotificationMessage(DateTime dueDate)
@@ -149,7 +178,7 @@ namespace TaskManager
             {
                 case Resource.Id.Settings:
                     var settings = new Intent(this, typeof(SettingsActivity));
-                    settings.PutExtra("notificationsEnabled", notificationsEnabled.ToString());
+                    settings.PutExtra("notificationsEnabled", isNotificationsEnabled.ToString());
                     this.StartActivityForResult(settings, 3);
                     break;
             }
@@ -208,11 +237,9 @@ namespace TaskManager
             }
             if (requestCode == 3)
             {
-                notificationsEnabled = data.GetStringExtra("notificationsEnabled") == "true";
-                if (notificationsEnabled)
-                    StartNotification();
+                isNotificationsEnabled = data.GetStringExtra("notificationsEnabled") == "true";
             }
-            StartNotification();
+            StartAlarm();
             this.TaskListAdaptor.NotifyDataSetChanged();
             base.OnActivityResult(requestCode, resultCode, data);
         }

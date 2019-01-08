@@ -22,16 +22,28 @@
 		android:minHeight="25dp"
 		android:minWidth="25dp"
 		android:padding="5dp"
-		android:layout_marginLeft="-15dp"
+		android:layout_marginLeft="-12dp"
 	/>
 
     <ListView android:id="@+id/mainlistview"
 		android:layout_below="@id/searchView1"
-		android:paddingBottom="120dp"
+		android:paddingBottom="150dp"
 		android:clipToPadding="false"
+		android:choiceMode="multipleChoice"
 		android:layout_height="wrap_content" 
 		android:layout_width="match_parent"> 
 	</ListView>  
+
+	<TextView
+		android:paddingTop="55dp"
+		android:id="@+id/no_tasks_found"
+		android:gravity="center"
+		android:textSize="12dp"
+		android:layout_below="@id/mainlistview"
+		android:text="No Tasks Found"
+		android:layout_height="wrap_content" 
+		android:layout_width="match_parent"
+	/>
 
 	 <android.support.design.widget.FloatingActionButton
        android:id="@+id/floating_add_button"

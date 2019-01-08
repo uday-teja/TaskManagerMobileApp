@@ -25,7 +25,7 @@ namespace TaskManager.Activities
 
         private async void StartMainActivity()
         {
-            await Task.Delay(1000);
+            await Task.Delay(500);
             StartActivity(typeof(MainActivity));
         }
     }

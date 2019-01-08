@@ -16,12 +16,13 @@ using Java.Text;
 using Java.Util;
 using Newtonsoft.Json;
 using TaskManager.Model;
+using TaskManager.Service;
 using static Android.App.DatePickerDialog;
 using static Android.App.TimePickerDialog;
 
 namespace TaskManager.Activities
 {
-    [Activity(Label = "@string/add_task", ParentActivity = typeof(MainActivity), Theme = "@style/AppTheme", MainLauncher = false)]
+    [Activity(Label = "@string/add_task", Theme = "@style/AppTheme", MainLauncher = false)]
     public class AddEditActivity : AppCompatActivity, IOnDateSetListener, IOnTimeSetListener
     {
         private EditText dueDate;
@@ -29,6 +30,7 @@ namespace TaskManager.Activities
         private Calendar calendar;
         private Task currentTask;
         private bool isUpdate;
+        private TaskService taskService;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -39,13 +41,16 @@ namespace TaskManager.Activities
             SetDueDatePicker();
             SetPrioritySpinner();
             currentTask = new Task();
+            this.taskService = new TaskService();
             calendar = Calendar.Instance;
+            FindViewById<Spinner>(Resource.Id.status).Enabled = false;
             var selectedTask = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
             if (selectedTask != string.Empty)
             {
                 isUpdate = true;
                 EditTask();
             }
+            FindViewById<Spinner>(Resource.Id.status).Enabled = isUpdate;
         }
 
         private void SetToolbar()
@@ -87,13 +92,31 @@ namespace TaskManager.Activities
             currentTask.Status = (Status)FindViewById<Spinner>(Resource.Id.status).SelectedItemPosition;
             var date = $"{FindViewById<EditText>(Resource.Id.due_date).Text} {FindViewById<EditText>(Resource.Id.due_time).Text}";
             currentTask.DueDate = date != " " ? currentTask.DueDate = Convert.ToDateTime(date) : DateTime.Now.AddDays(1);
-            SendTask();
+            if (IsValidTask())
+                AddEditTask();
         }
 
-        private void SendTask()
+        private bool IsValidTask()
+        {
+            bool valid = true;
+            if (currentTask.Name.Trim() == string.Empty)
+            {
+                valid = false;
+                FindViewById<EditText>(Resource.Id.name).Error = "Requried Field";
+            }
+            if (currentTask.Description.Trim() == string.Empty)
+            {
+                valid = false;
+                FindViewById<EditText>(Resource.Id.description).Error = "Requried Field";
+            }
+            return valid;
+        }
+
+        private void AddEditTask()
         {
             if (isUpdate)
             {
+                this.taskService.UpdateTask(this.currentTask);
                 Intent updateTask = new Intent(this, typeof(AddEditActivity));
                 updateTask.PutExtra("type", JsonConvert.SerializeObject(Crud.Update));
                 updateTask.PutExtra("task", JsonConvert.SerializeObject(this.currentTask));
@@ -101,6 +124,7 @@ namespace TaskManager.Activities
             }
             else
             {
+                this.taskService.AddTask(this.currentTask);
                 Intent newTask = new Intent(this, typeof(MainActivity));
                 newTask.PutExtra("newtask", JsonConvert.SerializeObject(this.currentTask));
                 SetResult(Result.Ok, newTask);
@@ -111,8 +135,10 @@ namespace TaskManager.Activities
         private void SetDueDatePicker()
         {
             dueDate = FindViewById<EditText>(Resource.Id.due_date);
+            dueDate.Click -= DueDate_Click;
             dueDate.Click += DueDate_Click;
             dueTime = FindViewById<EditText>(Resource.Id.due_time);
+            dueTime.Click -= DueTimeClick;
             dueTime.Click += DueTimeClick;
         }
 
@@ -157,6 +183,9 @@ namespace TaskManager.Activities
         {
             switch (item.ItemId)
             {
+                case Android.Resource.Id.Home:
+                    this.OnBackPressed();
+                    break;
                 case Resource.Id.action_new:
                     this.AddTaskClick();
                     break;

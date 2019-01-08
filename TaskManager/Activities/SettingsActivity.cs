@@ -13,10 +13,9 @@ using Newtonsoft.Json;
 
 namespace TaskManager.Activities
 {
-    [Activity(Label = "Settings", ParentActivity = typeof(MainActivity), Theme = "@style/AppTheme", MainLauncher = false)]
+    [Activity(Label = "Settings", Theme = "@style/AppTheme", MainLauncher = false)]
     public class SettingsActivity : AppCompatActivity
     {
-
         public Android.Widget.Switch notificationSwitch { get; set; }
 
         protected override void OnCreate(Bundle savedInstanceState)
@@ -28,7 +27,7 @@ namespace TaskManager.Activities
             SupportActionBar.SetDisplayHomeAsUpEnabled(true);
             SupportActionBar.SetHomeButtonEnabled(true);
             notificationSwitch = FindViewById<Android.Widget.Switch>(Resource.Id.notificationSwitch);
-            notificationSwitch.Checked = Intent.GetStringExtra("notificationsEnabled") == "true";
+            notificationSwitch.Checked = Intent.GetStringExtra("IsNotificationsEnabled") == "True";
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)
@@ -36,9 +35,9 @@ namespace TaskManager.Activities
             if (item.ItemId == Android.Resource.Id.Home)
             {
                 Intent isNotify = new Intent(this, typeof(SettingsActivity));
-                isNotify.PutExtra("notificationsEnabled", JsonConvert.SerializeObject(notificationSwitch.Checked));
+                isNotify.PutExtra("IsNotificationsEnabled", notificationSwitch.Checked.ToString());
                 SetResult(Result.Ok, isNotify);
-                Finish();
+                this.OnBackPressed();
             }
             return base.OnOptionsItemSelected(item);
         }

@@ -14,10 +14,6 @@ using TaskManager.Activities;
 using TaskManager.Adaptors;
 using System;
 using Newtonsoft.Json;
-using AutoMapper;
-using Android.Support.V4.App;
-using TaskStackBuilder = Android.Support.V4.App.TaskStackBuilder;
-using Java.Util;
 
 namespace TaskManager
 {
@@ -34,6 +30,8 @@ namespace TaskManager
         private AlarmManager AlarmManager { get; set; }
         private Intent alarmIntent { get; set; }
         private bool isNotificationsEnabled { get; set; }
+        private PendingIntent pendingIntent;
+        private TextView noTasksFound;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -47,48 +45,34 @@ namespace TaskManager
             TaskListAdaptor = new TaskListAdaptor(this, this.RawTasks.Where(s => s.Status == Status.New).ToList());
             TaskListView.Adapter = TaskListAdaptor;
             CreateNotificationChannel();
-            StartAlarm();
+            noTasksFound = FindViewById<TextView>(Resource.Id.no_tasks_found);
+            CheckNoTasksFound();
+            this.isNotificationsEnabled = Intent.GetStringExtra("IsNotificationsEnabled") == "True";
         }
 
-        //public void StartNotification()
-        //{
-        //    var tasks = RawTasks.Where(t => t.Status == Status.New || t.Status == Status.InProgress);
-        //    alarmIntent = new Intent(this, typeof(AlarmReceiver));
-        //    foreach (var task in tasks)
-        //    {
-        //        Remind(task.Name, SetNotificationMessage(task.DueDate));
-        //    }
-        //}
-
-        void CreateNotificationChannel()
+        private void CreateNotificationChannel()
         {
-            var channel = new NotificationChannel("Channel", "name", NotificationImportance.Default)
-            {
-                Description = "demo"
-            };
-
+            var channel = new NotificationChannel("Task", "TaskNotification", NotificationImportance.Default);
             var notificationManager = (NotificationManager)GetSystemService(NotificationService);
             notificationManager.CreateNotificationChannel(channel);
+            if (isNotificationsEnabled)
+                StartAlarm();
         }
 
-        public void StartAlarm()
+        private void StartAlarm()
         {
-            AlarmManager alarmManager = (AlarmManager)GetSystemService(Context.AlarmService);
-            Intent myIntent;
-            PendingIntent pendingIntent;
-            myIntent = new Intent(this, typeof(AlarmReceiver));
-            pendingIntent = PendingIntent.GetBroadcast(this, 0, myIntent, 0);
-            alarmManager.SetRepeating(AlarmType.RtcWakeup, SystemClock.ElapsedRealtime() + 3000, 60 * 1000, pendingIntent);
+            var alarmManager = (AlarmManager)GetSystemService(Context.AlarmService);
+            alarmManager.SetRepeating(AlarmType.RtcWakeup, SystemClock.ElapsedRealtime(), 2 * 60 * 1000, GetPendingIntent());
+        }
 
-            var builder = new NotificationCompat.Builder(this)
-                .SetDefaults((int)NotificationDefaults.All)
-                         .SetSmallIcon(Resource.Drawable.logo)
-                         .SetVisibility((int)NotificationVisibility.Public)
-                         .SetContentTitle("A")
-                         .SetContentText("b");
-
-            var notificationManager = NotificationManagerCompat.From(this);
-            notificationManager.Notify(1, builder.Build());
+        private PendingIntent GetPendingIntent()
+        {
+            var intent = new Intent(this, typeof(AlarmReceiver));
+            var task = RawTasks.Where(t => t.Status == Status.New || t.Status == Status.InProgress).FirstOrDefault();
+            intent.PutExtra("title", task.Name);
+            intent.PutExtra("messsage", SetNotificationMessage(task.DueDate));
+            pendingIntent = PendingIntent.GetBroadcast(this, 0, intent, 0);
+            return pendingIntent;
         }
 
         private string SetNotificationMessage(DateTime dueDate)
@@ -112,7 +96,9 @@ namespace TaskManager
 
         private void InitializeClickEvents()
         {
+            TaskListView.ItemClick -= TaskList_ItemClick;
             TaskListView.ItemClick += TaskList_ItemClick;
+            TaskListView.ItemLongClick += TaskListViewItemLongClick;
             var floatingActionButton = FindViewById<FloatingActionButton>(Resource.Id.floating_add_button);
             floatingActionButton.Click += FloatingActionButton_Click;
             var bottomNavigation = FindViewById<BottomNavigationView>(Resource.Id.bottom_navigation);
@@ -121,8 +107,14 @@ namespace TaskManager
             SearchView.QueryTextChange += SearchQueryTextChange;
         }
 
+        private void TaskListViewItemLongClick(object sender, AdapterView.ItemLongClickEventArgs e)
+        {
+
+        }
+
         private void SearchQueryTextChange(object sender, SearchView.QueryTextChangeEventArgs e)
         {
+            this.TaskListAdaptor.NotifyDataSetChanged();
             TaskListAdaptor.Filter.InvokeFilter(e.NewText);
         }
 
@@ -150,6 +142,7 @@ namespace TaskManager
             LoadSelectedTasks(e.Item.ItemId);
             SearchView.SetQuery("", false);
             this.TaskListAdaptor.NotifyDataSetChanged();
+            CheckNoTasksFound();
         }
 
         private void LoadSelectedTasks(int id)
@@ -178,7 +171,7 @@ namespace TaskManager
             {
                 case Resource.Id.Settings:
                     var settings = new Intent(this, typeof(SettingsActivity));
-                    settings.PutExtra("notificationsEnabled", isNotificationsEnabled.ToString());
+                    settings.PutExtra("IsNotificationsEnabled", isNotificationsEnabled.ToString());
                     this.StartActivityForResult(settings, 3);
                     break;
             }
@@ -195,7 +188,6 @@ namespace TaskManager
                         var newTask = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("newtask"));
                         if (newTask != null)
                         {
-                            this.TaskService.AddTask(newTask);
                             this.RawTasks.Add(TaskService.GetLast());
                             if (newTask.Status == currentStatus)
                                 this.TaskListAdaptor.Tasks.Add(TaskService.GetLast());
@@ -206,42 +198,36 @@ namespace TaskManager
                         switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
                         {
                             case Crud.Update:
-                                this.TaskService.UpdateTask(task);
                                 var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
                                 var updateTask = this.TaskListAdaptor.Tasks.FirstOrDefault(s => s.Id == task.Id);
                                 if (updateRawData.Status == task.Status)
-                                {
-                                    updateTask.Name = task.Name;
-                                    updateTask.Description = task.Description;
-                                    updateTask.DueDate = task.DueDate;
-                                    updateTask.Status = task.Status;
-                                    updateTask.Priority = task.Priority;
-                                }
+                                    UpdateTaskData(task, updateTask);
                                 else
                                     this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
-                                updateRawData.Name = task.Name;
-                                updateRawData.Description = task.Description;
-                                updateRawData.DueDate = task.DueDate;
-                                updateRawData.Status = task.Status;
-                                updateRawData.Priority = task.Priority;
+                                UpdateTaskData(task, updateRawData);
                                 break;
                             case Crud.Delete:
-                                this.TaskService.DeleteTask(task);
                                 this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
                                 this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
                                 break;
                         }
                         break;
-
                 }
             }
-            if (requestCode == 3)
+            if (requestCode == 3 && data != null)
             {
-                isNotificationsEnabled = data.GetStringExtra("notificationsEnabled") == "true";
+                isNotificationsEnabled = data.GetStringExtra("IsNotificationsEnabled") == "True";
+                if (isNotificationsEnabled)
+                    StartAlarm();
             }
-            StartAlarm();
+            CheckNoTasksFound();
             this.TaskListAdaptor.NotifyDataSetChanged();
             base.OnActivityResult(requestCode, resultCode, data);
+        }
+
+        private void CheckNoTasksFound()
+        {
+            noTasksFound.Visibility = this.TaskListAdaptor.Tasks.Count > 0 ? ViewStates.Gone : ViewStates.Visible;
         }
 
         private void UpdateTaskData(Task source, Task destination)

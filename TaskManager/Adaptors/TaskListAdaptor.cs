@@ -84,7 +84,7 @@ namespace TaskManager.Adaptors
                 var results = new FilterResults();
                 if (!string.IsNullOrEmpty(constraint.ToString()))
                 {
-                    this.taskListAdaptor.Tasks = this.taskListAdaptor.allTasks.Where(s => s.Name.Contains(constraint.ToString())).ToList();
+                    this.taskListAdaptor.Tasks = this.taskListAdaptor.allTasks.Where(s => s.Name.Contains(constraint.ToString()) || s.Description.Contains(constraint.ToString())).ToList();
                     results.Count = this.taskListAdaptor.Tasks.Count();
                 }
                 else

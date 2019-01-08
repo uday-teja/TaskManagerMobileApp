@@ -48,8 +48,19 @@ namespace TaskManager.Activities
                 case Resource.Id.delete:
                     DeleteTask();
                     break;
+                case Resource.Id.share:
+                    ShareTask();
+                    break;
             }
             return base.OnOptionsItemSelected(item);
+        }
+
+        private void ShareTask()
+        {
+            Intent sharingIntent = new Intent(Android.Content.Intent.ActionSend);
+            sharingIntent.SetType("text/plain");
+            sharingIntent.PutExtra(Intent.ExtraText, $"Name: {SelectedTask.Name}\nDescription: {SelectedTask.Description}\nStatus: {SelectedTask.Status}\nDue Date: {SelectedTask.DueDate}");
+            StartActivity(Intent.CreateChooser(sharingIntent, "Share your task"));
         }
 
         private void EditTask()
@@ -63,6 +74,7 @@ namespace TaskManager.Activities
 
         private void DeleteTask()
         {
+            this.TaskService.DeleteTask(this.SelectedTask);
             var dialog = new Android.Support.V7.App.AlertDialog.Builder(this);
             dialog.SetTitle("Delete Task").SetMessage("Are you sure to delete the task?").SetPositiveButton("Yes", OnDeleteTask).SetNegativeButton("No", delegate { });
             dialog.Create().Show();

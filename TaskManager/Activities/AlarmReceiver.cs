@@ -18,14 +18,14 @@ namespace TaskManager.Activities
     {
         public override void OnReceive(Context context, Intent intent)
         {
-            var message = intent.GetStringExtra("message");
             var title = intent.GetStringExtra("title");
-            var builder = new NotificationCompat.Builder(context)
-                .SetDefaults((int)NotificationDefaults.All)
-                         .SetSmallIcon(Resource.Drawable.logo)
-                         .SetVisibility((int)NotificationVisibility.Public)
-                         .SetContentTitle("A")
-                         .SetContentText("b");
+            var description = intent.GetStringExtra("messsage");
+            var builder = new NotificationCompat.Builder(context, "Task")
+                        .SetDefaults((int)NotificationDefaults.All)
+                        .SetSmallIcon(Resource.Drawable.logo)
+                        .SetVisibility((int)NotificationVisibility.Public)
+                        .SetContentTitle(title)
+                        .SetContentText(description);
             var notificationManager = (NotificationManager)context.GetSystemService(Context.NotificationService);
             notificationManager.Notify(1, builder.Build());
         }

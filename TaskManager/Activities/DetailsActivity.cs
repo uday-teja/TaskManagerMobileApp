@@ -15,7 +15,7 @@ using TaskManager.Service;
 
 namespace TaskManager.Activities
 {
-    [Activity(Label = "Task Details", ParentActivity = typeof(MainActivity), Theme = "@style/AppTheme", MainLauncher = false)]
+    [Activity(Label = "Task Details", Theme = "@style/AppTheme", MainLauncher = false)]
     public class DetailsActivity : AppCompatActivity
     {
         private Task SelectedTask { get; set; }
@@ -24,11 +24,21 @@ namespace TaskManager.Activities
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+            TaskService = new TaskService();
             SetContentView(Resource.Layout.task_details_view);
+            SetToolbar();
+            SetTaskDetails();
+        }
+
+        private void SetToolbar()
+        {
             var toolbar = FindViewById<Android.Support.V7.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
-            TaskService = new TaskService();
             SupportActionBar.SetDisplayHomeAsUpEnabled(true);
+        }
+
+        private void SetTaskDetails()
+        {
             SelectedTask = JsonConvert.DeserializeObject<Task>(Intent.GetStringExtra("taskDetails"));
             FindViewById<TextView>(Resource.Id.taskdetailname).Text = SelectedTask.Name;
             FindViewById<TextView>(Resource.Id.taskDetaildescription).Text = SelectedTask.Description;
@@ -42,6 +52,9 @@ namespace TaskManager.Activities
         {
             switch (item.ItemId)
             {
+                case Android.Resource.Id.Home:
+                    this.OnBackPressed();
+                    break;
                 case Resource.Id.edit:
                     EditTask();
                     break;
@@ -57,7 +70,7 @@ namespace TaskManager.Activities
 
         private void ShareTask()
         {
-            Intent sharingIntent = new Intent(Android.Content.Intent.ActionSend);
+            Intent sharingIntent = new Intent(Intent.ActionSend);
             sharingIntent.SetType("text/plain");
             sharingIntent.PutExtra(Intent.ExtraText, $"Name: {SelectedTask.Name}\nDescription: {SelectedTask.Description}\nStatus: {SelectedTask.Status}\nDue Date: {SelectedTask.DueDate}");
             StartActivity(Intent.CreateChooser(sharingIntent, "Share your task"));

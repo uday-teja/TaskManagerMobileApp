@@ -66,6 +66,7 @@
     <Compile Include="Activities\SplashActivity.cs" />
     <Compile Include="Activities\DetailsActivity.cs" />
     <Compile Include="Adaptors\TaskListAdaptor.cs" />
+    <Compile Include="GestureListener.cs" />
     <Compile Include="Model\Task.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

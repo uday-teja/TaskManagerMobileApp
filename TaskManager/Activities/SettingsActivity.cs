@@ -22,12 +22,16 @@ namespace TaskManager.Activities
         {
             base.OnCreate(savedInstanceState);
             SetContentView(Resource.Layout.settings_view);
+            SetToolbar();
+            notificationSwitch = FindViewById<Android.Widget.Switch>(Resource.Id.notificationSwitch);
+            notificationSwitch.Checked = Intent.GetStringExtra("IsNotificationsEnabled") == "True";
+        }
+
+        private void SetToolbar()
+        {
             var toolbar = FindViewById<Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
             SupportActionBar.SetDisplayHomeAsUpEnabled(true);
-            SupportActionBar.SetHomeButtonEnabled(true);
-            notificationSwitch = FindViewById<Android.Widget.Switch>(Resource.Id.notificationSwitch);
-            notificationSwitch.Checked = Intent.GetStringExtra("IsNotificationsEnabled") == "True";
         }
 
         public override bool OnOptionsItemSelected(IMenuItem item)

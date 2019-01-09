@@ -43,14 +43,13 @@ namespace TaskManager.Activities
             currentTask = new Task();
             this.taskService = new TaskService();
             calendar = Calendar.Instance;
-            FindViewById<Spinner>(Resource.Id.status).Enabled = false;
             var selectedTask = Intent.GetStringExtra("SelectedTask") ?? string.Empty;
             if (selectedTask != string.Empty)
             {
                 isUpdate = true;
                 EditTask();
             }
-            FindViewById<Spinner>(Resource.Id.status).Enabled = isUpdate;
+            FindViewById<LinearLayout>(Resource.Id.priority_layout).Visibility = isUpdate ? ViewStates.Visible : ViewStates.Gone;
         }
 
         private void SetToolbar()
@@ -160,7 +159,7 @@ namespace TaskManager.Activities
             if (this.isUpdate)
             {
                 year = this.currentTask.DueDate.Year;
-                month = this.currentTask.DueDate.Month;
+                month = this.currentTask.DueDate.Month -1;
                 day = this.currentTask.DueDate.Day;
             }
             else

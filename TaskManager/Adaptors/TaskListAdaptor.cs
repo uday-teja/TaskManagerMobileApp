@@ -48,26 +48,28 @@ namespace TaskManager.Adaptors
         public override View GetView(int position, View convertView, ViewGroup parent)
         {
             var view = convertView ?? activity.LayoutInflater.Inflate(Resource.Layout.task_row_view, null);
-            var task = Tasks[position];
-            var name = view.FindViewById<TextView>(Resource.Id.taskName);
-            var description = view.FindViewById<TextView>(Resource.Id.taskDescription);
-            var priorityColor = view.FindViewById<LinearLayout>(Resource.Id.task_row_status);
-            switch (task.Priority)
+            if(view != null && position < Tasks.Count)
             {
-                case Priority.Low:
-                    priorityColor.SetBackgroundColor(Color.ParseColor("#D3D3D3"));
-                    break;
-                case Priority.Medium:
-                    priorityColor.SetBackgroundColor(Color.ParseColor("#fbbf79"));
-                    break;
-                case Priority.High:
-                    priorityColor.SetBackgroundColor(Color.ParseColor("#bd322c"));
-                    break;
+                var task = Tasks[position];
+                var name = view.FindViewById<TextView>(Resource.Id.taskName);
+                var description = view.FindViewById<TextView>(Resource.Id.taskDescription);
+                var priorityColor = view.FindViewById<LinearLayout>(Resource.Id.task_row_status);
+                switch (task.Priority)
+                {
+                    case Priority.Low:
+                        priorityColor.SetBackgroundColor(Color.ParseColor("#D3D3D3"));
+                        break;
+                    case Priority.Medium:
+                        priorityColor.SetBackgroundColor(Color.ParseColor("#fbbf79"));
+                        break;
+                    case Priority.High:
+                        priorityColor.SetBackgroundColor(Color.ParseColor("#bd322c"));
+                        break;
+                }
+                name.Text = task.Name;
+                description.Text = task.Description;
             }
-            name.Text = task.Name;
-            description.Text = task.Description;
             return view;
-
         }
 
         public class TaskFilter : Filter

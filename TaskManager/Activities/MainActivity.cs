@@ -14,6 +14,11 @@ using TaskManager.Activities;
 using TaskManager.Adaptors;
 using System;
 using Newtonsoft.Json;
+using ListViewSwipeItem;
+using Android.Support.V4.Widget;
+using Android.Graphics;
+using System.ComponentModel;
+using System.Threading;
 
 namespace TaskManager
 {
@@ -21,17 +26,17 @@ namespace TaskManager
     public class MainActivity : AppCompatActivity
     {
         public List<Task> RawTasks { get; set; }
-        public Task Task { get; set; }
         public ListView TaskListView { get; set; }
         private TaskService TaskService { get; set; }
         private TaskListAdaptor TaskListAdaptor { get; set; }
         private Status currentStatus { get; set; }
         private SearchView SearchView { get; set; }
-        private AlarmManager AlarmManager { get; set; }
-        private Intent alarmIntent { get; set; }
         private bool isNotificationsEnabled { get; set; }
         private PendingIntent pendingIntent;
         private TextView noTasksFound;
+        GestureDetector gestureDetector;
+        GestureListener gestureListener;
+        private SwipeRefreshLayout refreshLayout;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -48,6 +53,40 @@ namespace TaskManager
             noTasksFound = FindViewById<TextView>(Resource.Id.no_tasks_found);
             CheckNoTasksFound();
             this.isNotificationsEnabled = Intent.GetStringExtra("IsNotificationsEnabled") == "True";
+            SetRefresh();
+            //gestureListener = new GestureListener();
+            //gestureDetector = new GestureDetector(this,gestureListener);
+        }
+
+        private void SetRefresh()
+        {
+            refreshLayout = FindViewById<SwipeRefreshLayout>(Resource.Id.refreshOnSwipe);
+            refreshLayout.SetColorSchemeColors(Color.LightSkyBlue);
+            refreshLayout.Refresh += RefreshLayoutRefresh;
+        }
+
+        private void RefreshLayoutRefresh(object sender, EventArgs e)
+        {
+            BackgroundWorker work = new BackgroundWorker();
+            work.DoWork += WorkDoWork;
+            work.RunWorkerCompleted += WorkRunWorkerCompleted;
+            work.RunWorkerAsync();
+        }
+
+        private void WorkRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            this.TaskListAdaptor.Tasks = TaskService.GetAll().Where(s => s.Status == currentStatus).ToList();
+            refreshLayout.Refreshing = false;
+        }
+
+        private void WorkDoWork(object sender, DoWorkEventArgs e)
+        {
+            Thread.Sleep(1000);
+        }
+
+        private void GestureListenerRightEvent()
+        {
+            Toast.MakeText(this, "Gesture Right", ToastLength.Short).Show();
         }
 
         private void CreateNotificationChannel()
@@ -107,9 +146,12 @@ namespace TaskManager
             SearchView.QueryTextChange += SearchQueryTextChange;
         }
 
+        bool isListClick;
+
         private void TaskListViewItemLongClick(object sender, AdapterView.ItemLongClickEventArgs e)
         {
-
+            isListClick = true;
+            SetToolbar();
         }
 
         private void SearchQueryTextChange(object sender, SearchView.QueryTextChangeEventArgs e)
@@ -185,7 +227,7 @@ namespace TaskManager
                 switch (requestCode)
                 {
                     case 1:
-                        var newTask = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("newtask"));
+                        var newTask = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("newtask")) ?? null;
                         if (newTask != null)
                         {
                             this.RawTasks.Add(TaskService.GetLast());
@@ -194,31 +236,40 @@ namespace TaskManager
                         }
                         break;
                     case 2:
-                        var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("task"));
-                        switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
+                        var task = JsonConvert.DeserializeObject<Task>(data.GetStringExtra("task")) ?? null;
+                        if (task != null)
                         {
-                            case Crud.Update:
-                                var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
-                                var updateTask = this.TaskListAdaptor.Tasks.FirstOrDefault(s => s.Id == task.Id);
-                                if (updateRawData.Status == task.Status)
-                                    UpdateTaskData(task, updateTask);
-                                else
+                            switch (JsonConvert.DeserializeObject<Crud>(data.GetStringExtra("type")))
+                            {
+                                case Crud.Update:
+                                    var updateRawData = this.RawTasks.FirstOrDefault(s => s.Id == task.Id);
+                                    var updateTask = this.TaskListAdaptor.Tasks.FirstOrDefault(s => s.Id == task.Id);
+                                    if (updateRawData.Status == task.Status)
+                                        UpdateTaskData(task, updateTask);
+                                    else
+                                        this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
+                                    UpdateTaskData(task, updateRawData);
+                                    break;
+                                case Crud.Delete:
+                                    this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
                                     this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
-                                UpdateTaskData(task, updateRawData);
-                                break;
-                            case Crud.Delete:
-                                this.RawTasks.Remove(RawTasks.FirstOrDefault(t => t.Id == task.Id));
-                                this.TaskListAdaptor.Tasks.Remove(this.TaskListAdaptor.Tasks.FirstOrDefault(t => t.Id == task.Id));
-                                break;
+                                    break;
+                            }
+                        }
+                        break;
+                    case 3:
+                        if (data != null)
+                        {
+                            var enable = data.GetStringExtra("IsNotificationsEnabled") ?? null;
+                            if (enable != null)
+                            {
+                                isNotificationsEnabled = enable == "True";
+                                if (isNotificationsEnabled)
+                                    StartAlarm();
+                            }
                         }
                         break;
                 }
-            }
-            if (requestCode == 3 && data != null)
-            {
-                isNotificationsEnabled = data.GetStringExtra("IsNotificationsEnabled") == "True";
-                if (isNotificationsEnabled)
-                    StartAlarm();
             }
             CheckNoTasksFound();
             this.TaskListAdaptor.NotifyDataSetChanged();

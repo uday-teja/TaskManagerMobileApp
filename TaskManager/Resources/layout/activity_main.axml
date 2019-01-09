@@ -22,24 +22,32 @@
 		android:minHeight="25dp"
 		android:minWidth="25dp"
 		android:padding="5dp"
-		android:layout_marginLeft="-12dp"
+		android:layout_marginLeft="-15dp"
 	/>
 
-    <ListView android:id="@+id/mainlistview"
+	<android.support.v4.widget.SwipeRefreshLayout 
+		android:id="@+id/refreshOnSwipe"
 		android:layout_below="@id/searchView1"
-		android:paddingBottom="150dp"
-		android:clipToPadding="false"
-		android:choiceMode="multipleChoice"
-		android:layout_height="wrap_content" 
-		android:layout_width="match_parent"> 
-	</ListView>  
+		android:layout_width="match_parent" 
+		android:layout_height="wrap_content"> 
 
+		<ListView android:id="@+id/mainlistview"
+			android:layout_marginRight="10dp"
+			android:layout_marginLeft="5dp"
+			android:paddingBottom="150dp"
+			android:choiceMode="multipleChoice"
+			android:layout_height="wrap_content" 
+			android:layout_width="match_parent"> 
+	</ListView>
+
+	</android.support.v4.widget.SwipeRefreshLayout>
+	
 	<TextView
 		android:paddingTop="55dp"
 		android:id="@+id/no_tasks_found"
 		android:gravity="center"
 		android:textSize="12dp"
-		android:layout_below="@id/mainlistview"
+		android:layout_below="@id/refreshOnSwipe"
 		android:text="No Tasks Found"
 		android:layout_height="wrap_content" 
 		android:layout_width="match_parent"
